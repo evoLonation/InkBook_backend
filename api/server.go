@@ -11,10 +11,22 @@ func Start(address string) {
 	// write routers here
 	router.GET("/hello", hello)
 
-	router.Run(address)
+	//user
+	userGroup := router.Group("/user")
+	userGroup.POST("/register", UserRegister)
+	userGroup.GET("/user/login", UserLogin)
+
+	//team
+	teamGroup := router.Group("/team")
+	teamGroup.POST("/register", TeamRegister)
+
+	err := router.Run(address)
+	if err != nil {
+		return
+	}
 }
 
-//该函数返回一个gin.H，gin.H是一个map，存储着键值对，将要返回给请求者
+// 该函数返回一个gin.H，gin.H是一个map，存储着键值对，将要返回给请求者
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
 }

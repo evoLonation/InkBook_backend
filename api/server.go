@@ -28,7 +28,20 @@ func Start(address string) {
 
 	//team
 	teamGroup := router.Group("/api/team")
-	teamGroup.POST("/register", TeamRegister)
+	teamGroup.POST("/register", TeamCreate)
+	teamGroup.POST("/dismiss", TeamDismiss)
+	teamGroup.POST("/modify/name", TeamModifyName)
+	teamGroup.POST("/modify/intro", TeamModifyIntro)
+	teamGroup.POST("/information", TeamInformation)
+	teamGroup.POST("/member", GetMember)
+	teamGroup.POST("/remove", Remove)
+	teamGroup.POST("/transfer", Transfer)
+	teamGroup.POST("/setAdmin", SetAdmin)
+	teamGroup.POST("/leave", Leave)
+	teamGroup.POST("/modify-avatar", TeamModifyAvatar)
+	teamGroup.GET("/get-avatar", TeamGetAvatar)
+	teamGroup.POST("/confirm", Confirm)
+	teamGroup.POST("/apply", Apply)
 
 	//project
 	projectGroup := router.Group("/api/project")

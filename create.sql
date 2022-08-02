@@ -16,6 +16,7 @@ create table teams
     name       varchar(20)                    not null,
     intro      varchar(255),
     captain_id varchar(20)                           not null,
+    url varchar(255),
     foreign key (captain_id) references users (user_id) on delete cascade
 );
 

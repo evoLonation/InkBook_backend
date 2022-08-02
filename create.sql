@@ -1,6 +1,6 @@
 create table users
 (
-    user_id  int primary key auto_increment not null,
+    user_id  varchar(20) primary key not null,
     nickname varchar(20)                    not null,
     realname varchar(20)                    not null,
     password varchar(20)                    not null,
@@ -35,9 +35,10 @@ create table projects
     name        varchar(50)                    not null,
     creator_id  int                            not null,
     create_time datetime                       not null default now(),
-    is_delete   bool                           not null default false,
+    is_deleted  bool                           not null default false,
     delete_time datetime                       null,
     intro       varchar(255),
+    img_url         varchar(255),
     foreign key (team_id) references teams (team_id) on delete cascade,
     foreign key (creator_id) references users (user_id) on delete cascade
 );

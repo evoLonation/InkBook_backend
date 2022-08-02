@@ -182,7 +182,7 @@ func UserModifyPassword(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Update("password", newPwd)
+	entity.Db.Model(&user).Update("password", newPwd)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -231,7 +231,7 @@ func UserModifyEmail(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Update("email", newEmail)
+	entity.Db.Model(&user).Update("email", newEmail)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -260,7 +260,7 @@ func UserModifyIntroduction(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Update("intro", newIntro)
+	entity.Db.Model(&user).Update("intro", newIntro)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -289,7 +289,7 @@ func UserModifyNickname(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Update("nickname", newNick)
+	entity.Db.Model(&user).Update("nickname", newNick)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -318,7 +318,7 @@ func UserModifyRealname(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Update("newReal", newReal)
+	entity.Db.Model(&user).Update("realname", newReal)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -332,7 +332,7 @@ func UserTeam(c *gin.Context) {
 		return
 	}
 	var teams []entity.Team
-	selectErr := entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("left join user_team on user_team.team_id = teams.team_id where user_team.user_id <> ? ", userId).Scan(&teams).Error
+	selectErr := entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("left join team_member on team_member.team_id = teams.team_id where team_member.user_id <> ? ", userId).Scan(&teams).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{

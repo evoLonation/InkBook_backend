@@ -2,7 +2,7 @@ create table users
 (
     user_id  varchar(20) primary key not null,
     nickname varchar(20)                    not null,
-    realname varchar(20)                    not null,
+    realname varchar(20)                    ,
     password varchar(20)                    not null,
     gender   char(5),
     intro    varchar(255),

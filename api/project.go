@@ -24,6 +24,16 @@ type ProjectRenameRequest struct {
 	NewName   string `json:"newName"`
 }
 
+type ProjectModifyIntroRequest struct {
+	ProjectID int    `json:"projectId"`
+	NewIntro  string `json:"newIntro"`
+}
+
+type ProjectModifyImgRequest struct {
+	ProjectID int    `json:"projectId"`
+	NewImgURL string `json:"newImgUrl"`
+}
+
 func ProjectCreate(ctx *gin.Context) {
 	var request ProjectCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -81,6 +91,28 @@ func ProjectDelete(ctx *gin.Context) {
 	})
 }
 
+func ProjectCompleteDelete(ctx *gin.Context) {
+	var request ProjectDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	if project == (entity.Project{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不存在",
+		})
+		return
+	}
+
+	entity.Db.Delete(&project)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "项目删除成功",
+	})
+}
+
 func ProjectRename(ctx *gin.Context) {
 	var request ProjectRenameRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -130,5 +162,51 @@ func ProjectList(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"projects": projectList,
+	})
+}
+
+func ProjectModifyIntro(ctx *gin.Context) {
+	var request ProjectModifyIntroRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	if project == (entity.Project{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不存在",
+		})
+		return
+	}
+
+	project.Intro = request.NewIntro
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "项目简介修改成功",
+	})
+}
+
+func ProjectModifyImg(ctx *gin.Context) {
+	var request ProjectModifyImgRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	if project == (entity.Project{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不存在",
+		})
+		return
+	}
+
+	project.ImgURL = request.NewImgURL
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "项目图片修改成功",
 	})
 }

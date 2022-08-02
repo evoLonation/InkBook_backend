@@ -14,12 +14,4 @@ func init() {
 	if err != nil {
 		print(err.Error())
 	}
-	e := Db.AutoMigrate(&User{})
-	if e != nil {
-		return
-	}
-	e = Db.AutoMigrate(&Team{})
-	if e != nil {
-		return
-	}
 }

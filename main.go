@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	api.Start("127.0.0.1:8080")
+	api.Start("127.0.0.1:80")
 	print(entity.Db.Error)
 }

@@ -114,8 +114,21 @@ func ProjectList(ctx *gin.Context) {
 	}
 
 	var projects []entity.Project
-	entity.Db.Where("team_id = ? AND is_deleted = ?", teamId, false).Find(&projects)
+	var projectList []gin.H
+	entity.Db.Where("team_id = ?", teamId).Find(&projects)
+	for _, project := range projects {
+		if project.IsDeleted {
+			continue
+		}
+		projectJson := gin.H{
+			"id":     project.ProjectID,
+			"name":   project.Name,
+			"detail": project.Intro,
+			"imgUrl": project.ImgURL,
+		}
+		projectList = append(projectList, projectJson)
+	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg": projects,
+		"projects": projectList,
 	})
 }

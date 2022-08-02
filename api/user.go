@@ -11,6 +11,30 @@ import (
 	"time"
 )
 
+type IdentifyRequest struct {
+	email string
+}
+type UserRegisterRequest struct {
+	userCode string
+	sendCode string
+}
+type UserLoginRequest struct {
+	userId string
+	email  string
+	pwd    string
+}
+type UserInfoRequest struct {
+	userId   string
+	oldPwd   string
+	newPwd   string
+	userCode string
+	sendCode string
+	newEmail string
+	newIntro string
+	newReal  string
+	newNick  string
+}
+
 func UserRegister(c *gin.Context) {
 	var user entity.User
 	err := c.ShouldBind(&user)
@@ -30,20 +54,16 @@ func UserRegister(c *gin.Context) {
 			})
 			return
 		}
-		userCode, ok := c.GetPostForm("userCode")
-		if !ok {
+		var userRegisterRequest UserRegisterRequest
+		err := c.ShouldBind(&userRegisterRequest)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"msg": "参数错误",
 			})
 			return
 		}
-		sendCode, ok := c.GetPostForm("sendCode")
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"msg": "参数错误",
-			})
-			return
-		}
+		sendCode := userRegisterRequest.sendCode
+		userCode := userRegisterRequest.userCode
 		if sendCode != userCode {
 			c.JSON(http.StatusConflict, gin.H{
 				"msg": "验证码错误",
@@ -59,10 +79,18 @@ func UserRegister(c *gin.Context) {
 }
 
 func Identifying(c *gin.Context) {
-	email := []string{c.PostForm("email")}
+	var identifyRequest IdentifyRequest
+	err := c.ShouldBind(&identifyRequest)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	email := []string{identifyRequest.email}
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	code := fmt.Sprintf("%06v", rnd.Int31n(1000000))
-	err := SendEmail(email, code)
+	err = SendEmail(email, code)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
@@ -70,30 +98,26 @@ func Identifying(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "发送成功",
+		"msg":  "发送成功",
+		"code": code,
 	})
 }
 
 func UserLogin(c *gin.Context) {
 	var flag = 0
-	username, ok := c.GetQuery("username")
-	var email string
-	if !ok {
-		email, ok = c.GetQuery("email")
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"msg": "参数错误",
-			})
-			return
-		}
-		flag = 1
-	}
-	password, ok := c.GetQuery("password")
-	if !ok {
-		c.JSON(200, gin.H{
+	var userLoginRequest UserLoginRequest
+	err := c.ShouldBind(&userLoginRequest)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
+	}
+	username := userLoginRequest.userId
+	email := userLoginRequest.email
+	password := userLoginRequest.pwd
+	if username == "" {
+		flag = 1
 	}
 	var loginUser entity.User
 	var selectErr error
@@ -122,13 +146,15 @@ func UserLogin(c *gin.Context) {
 	})
 }
 func UserInformation(c *gin.Context) {
-	userId, ok := c.GetQuery("userId")
-	if !ok {
+	var userInfoRequest UserInfoRequest
+	err := c.ShouldBind(&userInfoRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
+	userId := userInfoRequest.userId
 	var user entity.User
 	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
@@ -146,27 +172,17 @@ func UserInformation(c *gin.Context) {
 	})
 }
 func UserModifyPassword(c *gin.Context) {
-	userId, ok := c.GetPostForm("userId")
-	if !ok {
+	var userInfoRequest UserInfoRequest
+	err := c.ShouldBind(&userInfoRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
-	newPwd, ok := c.GetPostForm("newPwd")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
-	oldpwd, ok := c.GetPostForm("OldPwd")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
+	userId := userInfoRequest.userId
+	oldPwd := userInfoRequest.oldPwd
+	newPwd := userInfoRequest.newPwd
 	var user entity.User
 	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
@@ -176,7 +192,7 @@ func UserModifyPassword(c *gin.Context) {
 		})
 		return
 	}
-	if user.Password != oldpwd {
+	if user.Password != oldPwd {
 		c.JSON(http.StatusConflict, gin.H{
 			"msg": "密码错误",
 		})
@@ -188,34 +204,18 @@ func UserModifyPassword(c *gin.Context) {
 	})
 }
 func UserModifyEmail(c *gin.Context) {
-	userId, ok := c.GetPostForm("userId")
-	if !ok {
+	var userInfoRequest UserInfoRequest
+	err := c.ShouldBind(&userInfoRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
-	newEmail, ok := c.GetPostForm("newEmail")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
-	userCode, ok := c.GetPostForm("userCode")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
-	sendCode, ok := c.GetPostForm("sendCode")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
+	userId := userInfoRequest.userId
+	newEmail := userInfoRequest.newEmail
+	sendCode := userInfoRequest.sendCode
+	userCode := userInfoRequest.userCode
 	if sendCode != userCode {
 		c.JSON(http.StatusConflict, gin.H{
 			"msg": "验证码错误",
@@ -237,20 +237,16 @@ func UserModifyEmail(c *gin.Context) {
 	})
 }
 func UserModifyIntroduction(c *gin.Context) {
-	userId, ok := c.GetPostForm("userId")
-	if !ok {
+	var userInfoRequest UserInfoRequest
+	err := c.ShouldBind(&userInfoRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
-	newIntro, ok := c.GetPostForm("newIntro")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
+	userId := userInfoRequest.userId
+	newIntro := userInfoRequest.newIntro
 	var user entity.User
 	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
@@ -266,20 +262,16 @@ func UserModifyIntroduction(c *gin.Context) {
 	})
 }
 func UserModifyNickname(c *gin.Context) {
-	userId, ok := c.GetPostForm("userId")
-	if !ok {
+	var userInfoRequest UserInfoRequest
+	err := c.ShouldBind(&userInfoRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
-	newNick, ok := c.GetPostForm("newNick")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
+	userId := userInfoRequest.userId
+	newNick := userInfoRequest.newNick
 	var user entity.User
 	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
@@ -295,20 +287,16 @@ func UserModifyNickname(c *gin.Context) {
 	})
 }
 func UserModifyRealname(c *gin.Context) {
-	userId, ok := c.GetPostForm("userId")
-	if !ok {
+	var userInfoRequest UserInfoRequest
+	err := c.ShouldBind(&userInfoRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
-	newReal, ok := c.GetPostForm("newReal")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
+	userId := userInfoRequest.userId
+	newReal := userInfoRequest.newReal
 	var user entity.User
 	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
@@ -324,13 +312,15 @@ func UserModifyRealname(c *gin.Context) {
 	})
 }
 func UserTeam(c *gin.Context) {
-	userId, ok := c.GetQuery("userId")
-	if !ok {
+	var userInfoRequest UserInfoRequest
+	err := c.ShouldBind(&userInfoRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
+	userId := userInfoRequest.userId
 	var teams []entity.Team
 	selectErr := entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("left join team_member on team_member.team_id = teams.team_id where team_member.user_id <> ? ", userId).Scan(&teams).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)

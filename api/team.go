@@ -298,3 +298,66 @@ func Transfer(c *gin.Context) {
 	})
 	return
 }
+func Leave(c *gin.Context) {
+	teamId, ok := c.GetQuery("teamId")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	operatorId, ok := c.GetQuery("operatorId")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	memberId, ok := c.GetQuery("memberId")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	var team entity.Team
+	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
+	errors.Is(selectErr, gorm.ErrRecordNotFound)
+	if selectErr != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "团队不存在",
+		})
+		return
+	}
+	var operator entity.TeamMember
+	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId).Error
+	errors.Is(selectErr, gorm.ErrRecordNotFound)
+	if selectErr != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "操作者不在团队中",
+		})
+		return
+	}
+	var member entity.TeamMember
+	selectErr = entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId).Error
+	errors.Is(selectErr, gorm.ErrRecordNotFound)
+	if selectErr != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "用户不在团队中",
+		})
+		return
+	}
+	if operator.Identity >= member.Identity && operator.Identity != 0 {
+		c.JSON(http.StatusConflict, gin.H{
+			"msg": "无转移权限",
+		})
+		return
+	}
+	temp := operator.Identity
+	entity.Db.Model(&operator).Update("identity", member.Identity)
+	entity.Db.Model(&member).Update("identity", temp)
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "转移成功",
+	})
+	return
+}

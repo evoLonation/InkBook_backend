@@ -116,6 +116,6 @@ func ProjectList(ctx *gin.Context) {
 	var projects []entity.Project
 	entity.Db.Where("team_id = ? AND is_deleted = ?", teamId, false).Find(&projects)
 	ctx.JSON(http.StatusOK, gin.H{
-
-	}
+		"msg": projects,
+	})
 }

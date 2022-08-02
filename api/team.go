@@ -11,19 +11,12 @@ func TeamRegister(c *gin.Context) {
 	err := c.ShouldBind(&team)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code": -1,
+			"msg": "参数错误",
 		})
 		return
 	} else {
-		var temp entity.User
-		entity.Db.Find(&temp, "name=?", team.Name)
-		if temp.UserId != "" {
-			c.JSON(200, gin.H{
-				"code": 1,
-			})
-			return
-		}
 		entity.Db.Create(&team)
+		//entity.Db
 		c.JSON(200, gin.H{
 			"code": 0,
 		})

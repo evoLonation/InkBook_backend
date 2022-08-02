@@ -1,8 +1,12 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"io"
+	"log"
 	"net/http"
+	"os"
 )
 
 func Start(address string) {
@@ -23,6 +27,24 @@ func Start(address string) {
 	userGroup.POST("/modify/realname", UserModifyRealname)
 	userGroup.POST("/send-identifying", Identifying)
 	userGroup.GET("/team", UserTeam)
+	userGroup.GET("/modify-avatar", func(ctx *gin.Context) {
+		file, header, err := ctx.Request.FormFile("file")
+		filename := header.Filename
+		fmt.Println(header.Filename)
+		out, err := os.Create("./localFile/" + filename)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer out.Close()
+		_, err = io.Copy(out, file)
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
+	userGroup.POST("/get-avatar", func(ctx *gin.Context) {
+		ctx.File("./localFile/_defaultavatar.webp")
+	})
 
 	//team
 	teamGroup := router.Group("/api/team")

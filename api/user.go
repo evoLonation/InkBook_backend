@@ -339,15 +339,57 @@ func UserTeam(c *gin.Context) {
 func UserModifyAvatar(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	filename := header.Filename
-	fmt.Println(header.Filename)
-	out, err := os.Create("./localFile/" + filename)
-
+	out, err := os.Create("./localFile/user/" + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer out.Close()
+	defer func(out *os.File) {
+		err := out.Close()
+		if err != nil {
+
+		}
+	}(out)
 	_, err = io.Copy(out, file)
 	if err != nil {
 		log.Fatal(err)
 	}
+	userId, ok := c.GetPostForm("userId")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	var user entity.User
+	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	errors.Is(selectErr, gorm.ErrRecordNotFound)
+	if selectErr != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "用户不存在",
+		})
+		return
+	}
+	entity.Db.Model(&user).Update("url", filename)
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "更新成功",
+	})
+}
+func UserGetAvatar(c *gin.Context) {
+	userId, ok := c.GetQuery("userId")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	var user entity.User
+	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	errors.Is(selectErr, gorm.ErrRecordNotFound)
+	if selectErr != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "用户不存在",
+		})
+		return
+	}
+	c.File("./localFile/user/" + user.Url)
 }

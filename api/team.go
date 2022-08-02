@@ -17,7 +17,7 @@ func TeamRegister(c *gin.Context) {
 	} else {
 		var temp entity.User
 		entity.Db.Find(&temp, "name=?", team.Name)
-		if temp.ID != 0 {
+		if temp.UserId != "" {
 			c.JSON(200, gin.H{
 				"code": 1,
 			})

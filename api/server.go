@@ -12,12 +12,20 @@ func Start(address string) {
 	router.GET("/hello", hello)
 
 	//user
-	userGroup := router.Group("/user")
+	userGroup := router.Group("/api/user")
 	userGroup.POST("/register", UserRegister)
 	userGroup.GET("/login", UserLogin)
+	userGroup.GET("/information", UserInformation)
+	userGroup.POST("/modify/password", UserModifyPassword)
+	userGroup.POST("/modify/email", UserModifyEmail)
+	userGroup.POST("/modify/intro", UserModifyIntroduction)
+	userGroup.POST("/modify/nickname", UserModifyNickname)
+	userGroup.POST("/modify/realname", UserModifyRealname)
+	userGroup.POST("/send-identifying", Identifying)
+	userGroup.GET("/team")
 
 	//team
-	teamGroup := router.Group("/team")
+	teamGroup := router.Group("/api/team")
 	teamGroup.POST("/register", TeamRegister)
 
 	err := router.Run(address)

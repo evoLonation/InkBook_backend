@@ -30,7 +30,7 @@ create table team_members
 
 create table projects
 (
-    project_id     int primary key auto_increment not null,
+    project_id  int primary key auto_increment not null,
     team_id     int         not null,
     name        varchar(50) not null,
     creator_id  int         not null,
@@ -46,7 +46,7 @@ create table documents
 (
     doc_id      int primary key auto_increment not null,
     name        varchar(20) not null,
-    project_id     int         not null,
+    project_id  int         not null,
     creator_id  int         not null,
     create_time datetime    not null default now(),
     modifier_id int,
@@ -65,7 +65,7 @@ create table prototypes
 (
     proto_id    int primary key auto_increment not null,
     name        varchar(20) not null,
-    project_id     int         not null,
+    project_id  int         not null,
     length      int         not null,
     width       int         not null,
     creator_id  int         not null,

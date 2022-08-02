@@ -18,5 +18,8 @@ func init() {
 	if e != nil {
 		return
 	}
-
+	e = Db.AutoMigrate(&Team{})
+	if e != nil {
+		return
+	}
 }

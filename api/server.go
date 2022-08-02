@@ -14,7 +14,7 @@ func Start(address string) {
 	//user
 	userGroup := router.Group("/user")
 	userGroup.POST("/register", UserRegister)
-	userGroup.GET("/user/login", UserLogin)
+	userGroup.GET("/login", UserLogin)
 
 	//team
 	teamGroup := router.Group("/team")

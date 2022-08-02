@@ -3,13 +3,14 @@ package api
 import (
 	"backend/entity"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 func TeamRegister(c *gin.Context) {
 	var team entity.Team
 	err := c.ShouldBind(&team)
 	if err != nil {
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"code": -1,
 		})
 		return

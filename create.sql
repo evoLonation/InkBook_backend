@@ -38,6 +38,7 @@ create table projects
     is_deleted  bool                           not null default false,
     delete_time datetime                       null,
     intro       varchar(255),
+    img_url     varchar(255),
     foreign key (team_id) references teams (team_id) on delete cascade,
     foreign key (creator_id) references users (user_id) on delete cascade
 );

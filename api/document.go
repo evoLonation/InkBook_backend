@@ -9,13 +9,13 @@ import (
 
 type DocumentCreateRequest struct {
 	Name      string `json:"name"`
-	CreatorID int    `json:"creatorId"`
+	CreatorID string `json:"creatorId"`
 	ProjectID int    `json:"projectId"`
 }
 
 type DocumentDeleteRequest struct {
-	DocID     int `json:"docId"`
-	DeleterID int `json:"deleterId"`
+	DocID     int    `json:"docId"`
+	DeleterID string `json:"deleterId"`
 }
 
 type DocumentListRequest struct {
@@ -47,7 +47,7 @@ func DocumentCreate(ctx *gin.Context) {
 		ModifyTime: time.Now(),
 		IsEditing:  false,
 		IsDeleted:  false,
-		DeleterID:  request.ProjectID,
+		DeleterID:  request.CreatorID,
 	}
 	entity.Db.Create(&document)
 	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectID).First(&document)

@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func SendEmailValidate(address []string, vCode string) error {
+func SendEmail(address []string, vCode string) error {
 	e := email.NewEmail()
-	e.From = fmt.Sprintf("发件人笔名 <发件人邮箱>")
+	e.From = fmt.Sprintf("发件人笔名 <413935740@qq.com>")
 	e.To = address
 	t := time.Now().Format("2006-01-02 15:04:05")
 	//设置文件发送的内容
@@ -28,6 +28,6 @@ func SendEmailValidate(address []string, vCode string) error {
 	`, address[0], t, vCode)
 	e.Text = []byte(content)
 	//设置服务器相关的配置
-	err := e.Send("smtp.qq.com:25", smtp.PlainAuth("", "413935740@qq.com", "zvlcftwclipccahg", "smtp.qq.com"))
+	err := e.Send("smtp.qq.com:25", smtp.PlainAuth("", "413935740@qq.com", "ukdwwhkaegvpcbch", "smtp.qq.com"))
 	return err
 }

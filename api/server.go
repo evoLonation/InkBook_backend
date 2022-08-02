@@ -20,6 +20,23 @@ func Start(address string) {
 	teamGroup := router.Group("/team")
 	teamGroup.POST("/register", TeamRegister)
 
+	//project
+	projectGroup := router.Group("/api/project")
+	{
+		projectGroup.POST("/create", ProjectCreate)
+		projectGroup.POST("/delete", ProjectDelete)
+		projectGroup.POST("/rename", ProjectRename)
+		projectGroup.GET("/list", ProjectList)
+	}
+
+	//document
+	documentGroup := router.Group("/api/document")
+	{
+		documentGroup.POST("/create", DocumentCreate)
+		documentGroup.POST("/delete", DocumentDelete)
+		documentGroup.GET("/list", DocumentList)
+	}
+
 	err := router.Run(address)
 	if err != nil {
 		return

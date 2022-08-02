@@ -8,4 +8,5 @@ type User struct {
 	Gender   string `json:"gender"`
 	Intro    string `json:"intro"`
 	Email    string `json:"email"`
+	Url      string `json:"url"`
 }

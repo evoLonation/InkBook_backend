@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"io"
+	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -23,9 +26,9 @@ type UserRegisterRequest struct {
 	SendCode string `json:"sendCode"`
 }
 type UserLoginRequest struct {
-	UserId string `json:"userId"`
-	Email  string `json:"email"`
-	Pwd    string `json:"pwd"`
+	UserId string `form:"userId"`
+	Email  string `form:"email"`
+	Pwd    string `form:"pwd"`
 }
 type UserInfoRequest struct {
 	UserId   string `json:"userId"`
@@ -45,10 +48,7 @@ func UserRegister(c *gin.Context) {
 	err := c.ShouldBindJSON(&userRegisterRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":     "参数错误",
-			"code":    2,
-			"user":    user,
-			"request": userRegisterRequest,
+			"msg": "参数错误",
 		})
 		return
 	}
@@ -109,7 +109,7 @@ func Identifying(c *gin.Context) {
 func UserLogin(c *gin.Context) {
 	var flag = 0
 	var userLoginRequest UserLoginRequest
-	err := c.ShouldBindJSON(&userLoginRequest)
+	err := c.ShouldBindQuery(&userLoginRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
@@ -150,7 +150,7 @@ func UserLogin(c *gin.Context) {
 }
 func UserInformation(c *gin.Context) {
 	var userInfoRequest UserInfoRequest
-	err := c.ShouldBindJSON(&userInfoRequest)
+	err := c.ShouldBindQuery(&userInfoRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
@@ -315,15 +315,13 @@ func UserModifyRealname(c *gin.Context) {
 	})
 }
 func UserTeam(c *gin.Context) {
-	var userInfoRequest UserInfoRequest
-	err := c.ShouldBindJSON(&userInfoRequest)
-	if err != nil {
+	userId, ok := c.GetQuery("userId")
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
-	userId := userInfoRequest.UserId
 	var teams []entity.Team
 	selectErr := entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("left join team_member on team_member.team_id = teams.team_id where team_member.user_id <> ? ", userId).Scan(&teams).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
@@ -337,4 +335,19 @@ func UserTeam(c *gin.Context) {
 		"msg":   "查找成功",
 		"teams": teams,
 	})
+}
+func UserModifyAvatar(c *gin.Context) {
+	file, header, err := c.Request.FormFile("file")
+	filename := header.Filename
+	fmt.Println(header.Filename)
+	out, err := os.Create("./localFile/" + filename)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer out.Close()
+	_, err = io.Copy(out, file)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

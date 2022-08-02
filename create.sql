@@ -6,7 +6,8 @@ create table users
     password varchar(20)                    not null,
     gender   char(5),
     intro    varchar(255),
-    email    varchar(50) unique             not null
+    email    varchar(50) unique             not null,
+    url varchar(255)
 );
 
 create table teams

@@ -105,5 +105,17 @@ func ProjectRename(ctx *gin.Context) {
 }
 
 func ProjectList(ctx *gin.Context) {
+	teamId, ok := ctx.GetQuery("teamId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "teamId不能为空",
+		})
+		return
+	}
 
+	var projects []entity.Project
+	entity.Db.Where("team_id = ? AND is_deleted = ?", teamId, false).Find(&projects)
+	ctx.JSON(http.StatusOK, gin.H{
+
+	}
 }

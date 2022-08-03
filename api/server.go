@@ -42,6 +42,7 @@ func Start(address string) {
 	teamGroup.GET("/get-avatar", TeamGetAvatar)
 	teamGroup.POST("/confirm", Confirm)
 	teamGroup.POST("/apply", Apply)
+	teamGroup.GET("/getAdminNum", getAdminNum)
 
 	//project
 	projectGroup := router.Group("/api/project")

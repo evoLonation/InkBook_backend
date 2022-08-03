@@ -140,3 +140,35 @@ func DocumentList(ctx *gin.Context) {
 		"docList": docList,
 	})
 }
+
+func DocumentListRecycle(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "projectId不能为空",
+		})
+		return
+	}
+
+	var documents []entity.Document
+	var docList []gin.H
+	entity.Db.Where("project_id = ?", projectId).Find(&documents)
+	for _, document := range documents {
+		if !document.IsDeleted {
+			continue
+		}
+		var creator entity.User
+		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
+		documentJson := gin.H{
+			"docId":      document.DocID,
+			"docName":    document.Name,
+			"creatorId":  document.CreatorID,
+			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+		}
+		docList = append(docList, documentJson)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"docList": docList,
+	})
+}

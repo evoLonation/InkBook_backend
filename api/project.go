@@ -155,35 +155,6 @@ func ProjectRename(ctx *gin.Context) {
 	})
 }
 
-func ProjectList(ctx *gin.Context) {
-	teamId, ok := ctx.GetQuery("teamId")
-	if !ok {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "teamId不能为空",
-		})
-		return
-	}
-
-	var projects []entity.Project
-	var projectList []gin.H
-	entity.Db.Where("team_id = ?", teamId).Find(&projects)
-	for _, project := range projects {
-		if project.IsDeleted {
-			continue
-		}
-		projectJson := gin.H{
-			"id":     project.ProjectID,
-			"name":   project.Name,
-			"detail": project.Intro,
-			"imgUrl": project.ImgURL,
-		}
-		projectList = append(projectList, projectJson)
-	}
-	ctx.JSON(http.StatusOK, gin.H{
-		"projects": projectList,
-	})
-}
-
 func ProjectModifyIntro(ctx *gin.Context) {
 	var request ProjectModifyIntroRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -227,5 +198,63 @@ func ProjectModifyImg(ctx *gin.Context) {
 	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目图片修改成功",
+	})
+}
+
+func ProjectList(ctx *gin.Context) {
+	teamId, ok := ctx.GetQuery("teamId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "teamId不能为空",
+		})
+		return
+	}
+
+	var projects []entity.Project
+	var projectList []gin.H
+	entity.Db.Where("team_id = ?", teamId).Find(&projects)
+	for _, project := range projects {
+		if project.IsDeleted {
+			continue
+		}
+		projectJson := gin.H{
+			"id":     project.ProjectID,
+			"name":   project.Name,
+			"detail": project.Intro,
+			"imgUrl": project.ImgURL,
+		}
+		projectList = append(projectList, projectJson)
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"projects": projectList,
+	})
+}
+
+func ProjectListRecycle(ctx *gin.Context) {
+	teamId, ok := ctx.GetQuery("teamId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "teamId不能为空",
+		})
+		return
+	}
+
+	var projects []entity.Project
+	var projectList []gin.H
+	entity.Db.Where("team_id = ?", teamId).Find(&projects)
+	for _, project := range projects {
+		if !project.IsDeleted {
+			continue
+		}
+		projectJson := gin.H{
+			"id":     project.ProjectID,
+			"name":   project.Name,
+			"detail": project.Intro,
+			"imgUrl": project.ImgURL,
+		}
+		projectList = append(projectList, projectJson)
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"projects": projectList,
 	})
 }

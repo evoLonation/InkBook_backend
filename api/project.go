@@ -209,7 +209,7 @@ func ProjectModifyImg(ctx *gin.Context) {
 	})
 }
 
-func ProjectList(ctx *gin.Context) {
+func ProjectListTeam(ctx *gin.Context) {
 	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -236,6 +236,46 @@ func ProjectList(ctx *gin.Context) {
 	if len(projectList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
 			"msg": "当前团队没有项目",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"projects": projectList,
+	})
+}
+
+func ProjectListUser(ctx *gin.Context) {
+	userId, ok := ctx.GetQuery("userId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "userId不能为空",
+		})
+		return
+	}
+
+	var teams []entity.TeamMember
+	var projectList []gin.H
+	entity.Db.Where("member_id = ?", userId).Find(&teams)
+	for _, team := range teams {
+		var projects []entity.Project
+		entity.Db.Where("team_id = ?", team.TeamId).Find(&projects)
+		for _, project := range projects {
+			if project.IsDeleted {
+				continue
+			}
+			projectJson := gin.H{
+				"id":     project.ProjectID,
+				"teamId": team.TeamId,
+				"name":   project.Name,
+				"detail": project.Intro,
+				"imgUrl": project.ImgURL,
+			}
+			projectList = append(projectList, projectJson)
+		}
+	}
+	if len(projectList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前用户没有项目",
 		})
 		return
 	}

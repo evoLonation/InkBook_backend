@@ -56,6 +56,7 @@ func ProjectCreate(ctx *gin.Context) {
 		CreatorID:  request.UserId,
 		CreateTime: time.Now(),
 		IsDeleted:  false,
+		DeleteTime: time.Now(),
 		Intro:      request.Detail,
 		ImgURL:     request.ImgURL,
 	}
@@ -63,7 +64,14 @@ func ProjectCreate(ctx *gin.Context) {
 		project.Intro = "暂无项目简介"
 	}
 
-	entity.Db.Create(&project)
+	result := entity.Db.Create(&project)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目创建失败",
+		})
+		return
+	}
 	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamID).First(&project)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":       "项目创建成功",

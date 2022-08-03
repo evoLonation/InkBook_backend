@@ -54,7 +54,14 @@ func DocumentCreate(ctx *gin.Context) {
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
 	}
-	entity.Db.Create(&document)
+	result := entity.Db.Create(&document)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "文档创建失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
 	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectID).First(&document)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":   "文档创建成功",

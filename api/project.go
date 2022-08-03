@@ -230,7 +230,7 @@ func ProjectList(ctx *gin.Context) {
 	})
 }
 
-func ProjectListRecycle(ctx *gin.Context) {
+func ProjectRecycle(ctx *gin.Context) {
 	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -256,5 +256,33 @@ func ProjectListRecycle(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"projects": projectList,
+	})
+}
+
+func ProjectRecover(ctx *gin.Context) {
+	var request ProjectDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	if project == (entity.Project{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不存在",
+		})
+		return
+	}
+	if !project.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不在回收站中",
+		})
+		return
+	}
+
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("is_deleted", false)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "项目恢复成功",
 	})
 }

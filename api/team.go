@@ -529,13 +529,15 @@ func Apply(c *gin.Context) {
 	selectErr = entity.Db.Find(&member, "member_id=? and team_id =?", userId, teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr == nil {
-		c.JSON(http.StatusFound, gin.H{
-			"msg": "用户已在团队中",
+		c.JSON(http.StatusOK, gin.H{
+			"msg":  "用户已在团队中",
+			"code": 1,
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "请求成功",
+		"msg":  "请求成功",
+		"code": 0,
 	})
 	return
 }

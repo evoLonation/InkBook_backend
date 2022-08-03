@@ -55,7 +55,7 @@ func TeamDismiss(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	userId := teamInfoRequest.UserId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "teamId=?", teamId).Error
+	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -87,7 +87,7 @@ func TeamModifyName(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	newName := teamInfoRequest.NewName
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "teamId=?", teamId).Error
+	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{

@@ -23,12 +23,12 @@ func Start(address string) {
 	userGroup.POST("/modify/realname", UserModifyRealname)
 	userGroup.POST("/send-identifying", Identifying)
 	userGroup.GET("/team", UserTeam)
-	userGroup.POST("/modify-avatar", UserModifyAvatar)
+	userGroup.POST("/modify/avatar", UserModifyAvatar)
 	userGroup.GET("/get-avatar", UserGetAvatar)
 
 	//team
 	teamGroup := router.Group("/api/team")
-	teamGroup.POST("/register", TeamCreate)
+	teamGroup.POST("/create", TeamCreate)
 	teamGroup.POST("/dismiss", TeamDismiss)
 	teamGroup.POST("/modify/name", TeamModifyName)
 	teamGroup.POST("/modify/intro", TeamModifyIntro)

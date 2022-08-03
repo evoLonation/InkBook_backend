@@ -59,6 +59,10 @@ func ProjectCreate(ctx *gin.Context) {
 		Intro:      request.Detail,
 		ImgURL:     request.ImgURL,
 	}
+	if project.Intro == "" {
+		project.Intro = "暂无项目简介"
+	}
+
 	entity.Db.Create(&project)
 	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamID).First(&project)
 	ctx.JSON(http.StatusOK, gin.H{
@@ -79,6 +83,12 @@ func ProjectDelete(ctx *gin.Context) {
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
+		})
+		return
+	}
+	if project.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目已删除",
 		})
 		return
 	}
@@ -107,7 +117,7 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Delete(&project)
+	entity.Db.Where("project_id = ?", request.ProjectID).Delete(&project)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目删除成功",
 	})
@@ -125,6 +135,15 @@ func ProjectRename(ctx *gin.Context) {
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
+		})
+		return
+	}
+
+	var projects []entity.Project
+	entity.Db.Where("name = ? AND team_id = ?", request.NewName, project.TeamID).Find(&projects)
+	if len(projects) != 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目名称重复",
 		})
 		return
 	}

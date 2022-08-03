@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 type TeamInfoRequest struct {
@@ -35,8 +36,18 @@ func TeamCreate(c *gin.Context) {
 		})
 		return
 	} else {
+		userId := team.CaptainID
+		var user entity.User
+		selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
+		errors.Is(selectErr, gorm.ErrRecordNotFound)
+		if selectErr != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"msg": "用户不存在",
+			})
+			return
+		}
 		entity.Db.Create(&team)
-		teamMember := entity.Member{
+		teamMember := entity.TeamMember{
 			TeamId:   team.ID,
 			MemberId: team.CaptainID,
 			Identity: 0,
@@ -166,7 +177,9 @@ func GetMember(c *gin.Context) {
 		return
 	}
 	var members []TeamMember
-	selectErr := entity.Db.Table("users").Select("user.user_id as user_id,user.nickname as name,user.intro as intro,team_member.identity as identity").Joins("left join team_member on team_member.user_id = users.user_id where team_member.team_id <> ? ", teamId).Scan(&members).Error
+	id, _ := strconv.Atoi(teamId)
+	//selectErr := entity.Db.Table("users").Select("users.user_id as user_id,users.nickname as name,users.intro as intro,team_members.identity as identity").Joins("join team_members on team_members.member_id = users.user_id where team_members.team_id <> ? ", id).Scan(&members).Error
+	selectErr := entity.Db.Table("users").Select("users.user_id as user_id,users.nickname as name,users.intro as intro,team_members.identity as identity").Joins("join team_members on team_members.member_id = users.user_id ").Where("team_id = ?", id).Scan(&members).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -177,6 +190,7 @@ func GetMember(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"msg":     "查找成功",
 		"members": members,
+		"id":      id,
 	})
 }
 func Remove(c *gin.Context) {
@@ -200,7 +214,7 @@ func Remove(c *gin.Context) {
 		})
 		return
 	}
-	var operator entity.Member
+	var operator entity.TeamMember
 	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -209,7 +223,7 @@ func Remove(c *gin.Context) {
 		})
 		return
 	}
-	var member entity.Member
+	var member entity.TeamMember
 	selectErr = entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -224,7 +238,7 @@ func Remove(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Where("team_id = ? and member_id = ?", teamId, memberId).Delete(&entity.Member{})
+	entity.Db.Where("team_id = ? and member_id = ?", teamId, memberId).Delete(&entity.TeamMember{})
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "移除成功",
 	})
@@ -251,7 +265,7 @@ func Transfer(c *gin.Context) {
 		})
 		return
 	}
-	var operator entity.Member
+	var operator entity.TeamMember
 	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -260,7 +274,7 @@ func Transfer(c *gin.Context) {
 		})
 		return
 	}
-	var member entity.Member
+	var member entity.TeamMember
 	selectErr = entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -304,7 +318,7 @@ func SetAdmin(c *gin.Context) {
 		})
 		return
 	}
-	var operator entity.Member
+	var operator entity.TeamMember
 	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -313,7 +327,7 @@ func SetAdmin(c *gin.Context) {
 		})
 		return
 	}
-	var member entity.Member
+	var member entity.TeamMember
 	selectErr = entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -360,7 +374,7 @@ func Leave(c *gin.Context) {
 		})
 		return
 	}
-	var operator entity.Member
+	var operator entity.TeamMember
 	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -375,7 +389,7 @@ func Leave(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Where("team_id = ?and member_id=?", teamId, userId).Delete(&entity.Member{})
+	entity.Db.Where("team_id = ?and member_id=?", teamId, userId).Delete(&entity.TeamMember{})
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "离开成功",
 	})
@@ -461,7 +475,7 @@ func Confirm(c *gin.Context) {
 		})
 		return
 	}
-	teamMember := entity.Member{
+	teamMember := entity.TeamMember{
 		TeamId:   teamId,
 		MemberId: userId,
 		Identity: 2,
@@ -501,7 +515,7 @@ func Apply(c *gin.Context) {
 		})
 		return
 	}
-	var member entity.Member
+	var member entity.TeamMember
 	selectErr = entity.Db.Find(&member, "user_id=? and team_id =?", userId, teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr == nil {
@@ -523,7 +537,7 @@ func getAdminNum(c *gin.Context) {
 		})
 		return
 	}
-	var members []entity.Member
+	var members []entity.TeamMember
 	selectErr := entity.Db.Where("team_id = ?", teamId).Find(&members).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
@@ -558,7 +572,7 @@ func getIdentity(c *gin.Context) {
 		})
 		return
 	}
-	var member entity.Member
+	var member entity.TeamMember
 	selectErr := entity.Db.Find(&member, "user_id=? and team_id =?", userId, teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr == nil {

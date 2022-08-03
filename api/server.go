@@ -31,7 +31,7 @@ func Start(address string) {
 	teamGroup.POST("/create", TeamCreate)
 	teamGroup.POST("/dismiss", TeamDismiss)
 	teamGroup.POST("/modify/name", TeamModifyName)
-	teamGroup.POST("/modify/intro", TeamModifyIntro)
+	teamGroup.POST("/modify/introduction", TeamModifyIntro)
 	teamGroup.GET("/information", TeamInformation)
 	teamGroup.GET("/member", GetMember)
 	teamGroup.POST("/remove", Remove)

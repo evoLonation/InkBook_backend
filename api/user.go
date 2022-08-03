@@ -202,7 +202,7 @@ func UserModifyPassword(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&user).Update("password", newPwd)
+	entity.Db.Model(&user).Where("user_id = ?", userId).Update("password", newPwd)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -235,7 +235,7 @@ func UserModifyEmail(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&user).Update("email", newEmail)
+	entity.Db.Model(&user).Where("user_id = ?", userId).Update("email", newEmail)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -260,7 +260,7 @@ func UserModifyIntroduction(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&user).Update("intro", newIntro)
+	entity.Db.Model(&user).Where("user_id = ?", userId).Update("intro", newIntro)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -285,7 +285,7 @@ func UserModifyNickname(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&user).Update("nickname", newNick)
+	entity.Db.Model(&user).Where("user_id = ?", userId).Update("nickname", newNick)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -310,7 +310,7 @@ func UserModifyRealname(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&user).Update("realname", newReal)
+	entity.Db.Model(&user).Where("user_id = ?", userId).Update("realname", newReal)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -379,7 +379,7 @@ func UserModifyAvatar(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&user).Update("url", filename)
+	entity.Db.Model(&user).Where("user_id = ?", userId).Update("url", filename)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})

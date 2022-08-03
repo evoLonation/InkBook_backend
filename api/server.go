@@ -18,7 +18,7 @@ func Start(address string) {
 	userGroup.GET("/information", UserInformation)
 	userGroup.POST("/modify/password", UserModifyPassword)
 	userGroup.POST("/modify/email", UserModifyEmail)
-	userGroup.POST("/modify/intro", UserModifyIntroduction)
+	userGroup.POST("/modify/introduction", UserModifyIntroduction)
 	userGroup.POST("/modify/nickname", UserModifyNickname)
 	userGroup.POST("/modify/realname", UserModifyRealname)
 	userGroup.POST("/send-identifying", Identifying)

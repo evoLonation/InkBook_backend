@@ -4,6 +4,7 @@ import (
 	"backend/entity"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"sort"
 	"time"
 )
 
@@ -223,6 +224,9 @@ func ProjectListTeam(ctx *gin.Context) {
 	var projects []entity.Project
 	var projectList []gin.H
 	entity.Db.Where("team_id = ?", teamId).Find(&projects)
+	sort.SliceStable(projects, func(i, j int) bool {
+		return projects[i].Name < projects[j].Name
+	})
 	for _, project := range projects {
 		if project.IsDeleted {
 			continue
@@ -258,9 +262,15 @@ func ProjectListUser(ctx *gin.Context) {
 	var teams []entity.TeamMember
 	var projectList []gin.H
 	entity.Db.Where("member_id = ?", userId).Find(&teams)
+	sort.SliceStable(teams, func(i, j int) bool {
+		return teams[i].TeamId < teams[j].TeamId
+	})
 	for _, team := range teams {
 		var projects []entity.Project
 		entity.Db.Where("team_id = ?", team.TeamId).Find(&projects)
+		sort.SliceStable(projects, func(i, j int) bool {
+			return projects[i].Name < projects[j].Name
+		})
 		for _, project := range projects {
 			if project.IsDeleted {
 				continue
@@ -298,6 +308,9 @@ func ProjectRecycle(ctx *gin.Context) {
 	var projects []entity.Project
 	var projectList []gin.H
 	entity.Db.Where("team_id = ?", teamId).Find(&projects)
+	sort.SliceStable(projects, func(i, j int) bool {
+		return projects[i].Name < projects[j].Name
+	})
 	for _, project := range projects {
 		if !project.IsDeleted {
 			continue

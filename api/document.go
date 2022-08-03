@@ -4,6 +4,7 @@ import (
 	"backend/entity"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"sort"
 	"time"
 )
 
@@ -128,6 +129,9 @@ func DocumentList(ctx *gin.Context) {
 	var documents []entity.Document
 	var docList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&documents)
+	sort.SliceStable(documents, func(i, j int) bool {
+		return documents[i].Name < documents[j].Name
+	})
 	for _, document := range documents {
 		if document.IsDeleted {
 			continue
@@ -165,6 +169,9 @@ func DocumentRecycle(ctx *gin.Context) {
 	var documents []entity.Document
 	var docList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&documents)
+	sort.SliceStable(documents, func(i, j int) bool {
+		return documents[i].Name < documents[j].Name
+	})
 	for _, document := range documents {
 		if !document.IsDeleted {
 			continue

@@ -179,8 +179,10 @@ func ProjectModifyIntro(ctx *gin.Context) {
 		return
 	}
 
-	project.Intro = request.NewIntro
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	if request.NewIntro == "" {
+		request.NewIntro = "暂无项目简介"
+	}
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("intro", request.NewIntro)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目简介修改成功",
 	})
@@ -203,7 +205,7 @@ func ProjectModifyImg(ctx *gin.Context) {
 	}
 
 	project.ImgURL = request.NewImgURL
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("img_url", request.NewImgURL)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目图片修改成功",
 	})

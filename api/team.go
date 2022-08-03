@@ -187,10 +187,19 @@ func GetMember(c *gin.Context) {
 		})
 		return
 	}
+	var memberList []gin.H
+	for _, member := range members {
+		projectJson := gin.H{
+			"name":     member.Name,
+			"intro":    member.Intro,
+			"userId":   member.UserId,
+			"identity": member.Identity,
+		}
+		memberList = append(memberList, projectJson)
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"msg":     "查找成功",
-		"members": members,
-		"id":      id,
+		"members": memberList,
 	})
 }
 func Remove(c *gin.Context) {

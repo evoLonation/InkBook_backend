@@ -135,13 +135,18 @@ func DocumentList(ctx *gin.Context) {
 		}
 		docList = append(docList, documentJson)
 	}
-
+	if len(docList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前项目没有文档",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"docList": docList,
 	})
 }
 
-func DocumentListRecycle(ctx *gin.Context) {
+func DocumentRecycle(ctx *gin.Context) {
 	projectId, ok := ctx.GetQuery("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -167,8 +172,41 @@ func DocumentListRecycle(ctx *gin.Context) {
 		}
 		docList = append(docList, documentJson)
 	}
-
+	if len(docList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前回收站没有文档",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"docList": docList,
+	})
+}
+
+func DocumentRecover(ctx *gin.Context) {
+	var request DocumentDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", request.DocID)
+	if document == (entity.Document{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不存在",
+		})
+		return
+	}
+	if !document.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不在回收站中",
+		})
+		return
+	}
+
+	entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_deleted", false)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "文档恢复成功",
 	})
 }

@@ -324,7 +324,7 @@ func UserTeam(c *gin.Context) {
 		return
 	}
 	var teams []entity.Team
-	selectErr := entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("left join team_member on team_member.team_id = teams.team_id where team_member.user_id <> ? ", userId).Scan(&teams).Error
+	selectErr := entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("join team_members on team_members.team_id = teams.team_id", userId).Where("user_id=?", userId).Scan(&teams).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{

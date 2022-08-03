@@ -7,7 +7,7 @@ create table users
     gender   char(5),
     intro    varchar(255),
     email    varchar(50) unique             not null,
-    url varchar(255)
+    url varchar(255) default '_defaultavatar.webp'
 );
 
 create table teams
@@ -16,7 +16,7 @@ create table teams
     name       varchar(20)                    not null,
     intro      varchar(255),
     captain_id varchar(20)                           not null,
-    url varchar(255),
+    url varchar(255) default '_defaultavatar.webp',
     foreign key (captain_id) references users (user_id) on delete cascade
 );
 

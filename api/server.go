@@ -60,6 +60,7 @@ func Start(address string) {
 	{
 		documentGroup.POST("/create", DocumentCreate)
 		documentGroup.POST("/delete", DocumentDelete)
+		documentGroup.POST("/complete-delete", DocumentCompleteDelete)
 		documentGroup.GET("/list", DocumentList)
 	}
 

@@ -18,6 +18,10 @@ type DocumentDeleteRequest struct {
 	DeleterID string `json:"deleterId"`
 }
 
+type DocumentCompleteDeleteRequest struct {
+	DocID int `json:"docId"`
+}
+
 type DocumentListRequest struct {
 	ProjectID int `json:"projectId"`
 }
@@ -77,6 +81,28 @@ func DocumentDelete(ctx *gin.Context) {
 	document.DeleterID = request.DeleterID
 	document.DeleteTime = time.Now()
 	entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "文档删除成功",
+	})
+}
+
+func DocumentCompleteDelete(ctx *gin.Context) {
+	var request DocumentCompleteDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", request.DocID)
+	if document == (entity.Document{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不存在",
+		})
+		return
+	}
+
+	entity.Db.Delete(&document)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "文档删除成功",
 	})

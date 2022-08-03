@@ -54,7 +54,7 @@ func Start(address string) {
 		projectGroup.POST("/modify/intro", ProjectModifyIntro)
 		projectGroup.POST("/modify/img", ProjectModifyImg)
 		projectGroup.GET("/list", ProjectList)
-		projectGroup.GET("/list/recycle", ProjectListRecycle)
+		projectGroup.GET("/recycle", ProjectListRecycle)
 	}
 
 	//document
@@ -64,7 +64,7 @@ func Start(address string) {
 		documentGroup.POST("/delete", DocumentDelete)
 		documentGroup.POST("/complete-delete", DocumentCompleteDelete)
 		documentGroup.GET("/list", DocumentList)
-		documentGroup.GET("/list/recycle", DocumentListRecycle)
+		documentGroup.GET("/recycle", DocumentListRecycle)
 	}
 
 	err := router.Run(address)

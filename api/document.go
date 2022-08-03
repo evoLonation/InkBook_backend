@@ -135,7 +135,12 @@ func DocumentList(ctx *gin.Context) {
 		}
 		docList = append(docList, documentJson)
 	}
-
+	if len(docList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前项目没有文档",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"docList": docList,
 	})
@@ -167,7 +172,12 @@ func DocumentRecycle(ctx *gin.Context) {
 		}
 		docList = append(docList, documentJson)
 	}
-
+	if len(docList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前回收站没有文档",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"docList": docList,
 	})

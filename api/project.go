@@ -225,6 +225,12 @@ func ProjectList(ctx *gin.Context) {
 		}
 		projectList = append(projectList, projectJson)
 	}
+	if len(projectList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前团队没有项目",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"projects": projectList,
 	})
@@ -253,6 +259,12 @@ func ProjectRecycle(ctx *gin.Context) {
 			"imgUrl": project.ImgURL,
 		}
 		projectList = append(projectList, projectJson)
+	}
+	if len(projectList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前回收站中没有项目",
+		})
+		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"projects": projectList,

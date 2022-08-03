@@ -525,7 +525,7 @@ func Apply(c *gin.Context) {
 		return
 	}
 	var member entity.TeamMember
-	selectErr = entity.Db.Find(&member, "user_id=? and team_id =?", userId, teamId).Error
+	selectErr = entity.Db.Find(&member, "member_id=? and team_id =?", userId, teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr == nil {
 		c.JSON(http.StatusNotFound, gin.H{

@@ -149,17 +149,17 @@ func UserLogin(c *gin.Context) {
 	})
 }
 func UserInformation(c *gin.Context) {
-	var userInfoRequest UserInfoRequest
-	err := c.ShouldBindQuery(&userInfoRequest)
+	var userLoginRequest UserLoginRequest
+	err := c.ShouldBindQuery(&userLoginRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
-	userId := userInfoRequest.UserId
+	userId := userLoginRequest.UserId
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -188,7 +188,7 @@ func UserModifyPassword(c *gin.Context) {
 	oldPwd := userInfoRequest.OldPwd
 	newPwd := userInfoRequest.NewPwd
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -227,7 +227,7 @@ func UserModifyEmail(c *gin.Context) {
 		return
 	}
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -252,7 +252,7 @@ func UserModifyIntroduction(c *gin.Context) {
 	userId := userInfoRequest.UserId
 	newIntro := userInfoRequest.NewIntro
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -277,7 +277,7 @@ func UserModifyNickname(c *gin.Context) {
 	userId := userInfoRequest.UserId
 	newNick := userInfoRequest.NewNick
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -302,7 +302,7 @@ func UserModifyRealname(c *gin.Context) {
 	userId := userInfoRequest.UserId
 	newReal := userInfoRequest.NewReal
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -331,6 +331,15 @@ func UserTeam(c *gin.Context) {
 			"msg": "用户不存在",
 		})
 		return
+	}
+	var teamList []gin.H
+	for _, team := range teams {
+		projectJson := gin.H{
+			"name":   team.Name,
+			"intro":  team.Intro,
+			"teamId": team.ID,
+		}
+		teamList = append(teamList, projectJson)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"msg":   "查找成功",
@@ -362,7 +371,7 @@ func UserModifyAvatar(c *gin.Context) {
 		return
 	}
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -384,7 +393,7 @@ func UserGetAvatar(c *gin.Context) {
 		return
 	}
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "userId=?", userId).Error
+	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{

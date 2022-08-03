@@ -52,6 +52,7 @@ func DocumentCreate(ctx *gin.Context) {
 		IsEditing:  false,
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
+		DeleteTime: time.Now(),
 	}
 	entity.Db.Create(&document)
 	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectID).First(&document)
@@ -102,22 +103,24 @@ func DocumentCompleteDelete(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Delete(&document)
+	entity.Db.Where("doc_id = ?", request.DocID).Delete(&document)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "文档删除成功",
 	})
 }
 
 func DocumentList(ctx *gin.Context) {
-	var request DocumentListRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "projectId不能为空",
+		})
 		return
 	}
 
 	var documents []entity.Document
 	var docList []gin.H
-	entity.Db.Where("project_id = ?", request.ProjectID).Find(&documents)
+	entity.Db.Where("project_id = ?", projectId).Find(&documents)
 	for _, document := range documents {
 		if document.IsDeleted {
 			continue
@@ -128,7 +131,39 @@ func DocumentList(ctx *gin.Context) {
 			"docId":      document.DocID,
 			"docName":    document.Name,
 			"creatorId":  document.CreatorID,
-			"createInfo": document.CreateTime.Format("2022-01-01 00:00") + " by " + creator.Nickname,
+			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+		}
+		docList = append(docList, documentJson)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"docList": docList,
+	})
+}
+
+func DocumentListRecycle(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "projectId不能为空",
+		})
+		return
+	}
+
+	var documents []entity.Document
+	var docList []gin.H
+	entity.Db.Where("project_id = ?", projectId).Find(&documents)
+	for _, document := range documents {
+		if !document.IsDeleted {
+			continue
+		}
+		var creator entity.User
+		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
+		documentJson := gin.H{
+			"docId":      document.DocID,
+			"docName":    document.Name,
+			"creatorId":  document.CreatorID,
+			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
 		}
 		docList = append(docList, documentJson)
 	}

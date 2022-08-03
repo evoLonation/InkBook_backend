@@ -144,7 +144,7 @@ func UserLogin(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"msg":      "登陆成功",
-		"id":       loginUser.UserId,
+		"userId":   loginUser.UserId,
 		"username": loginUser.Nickname,
 	})
 }
@@ -170,6 +170,7 @@ func UserInformation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"msg":          "返回成功",
 		"nickname":     user.Nickname,
+		"realname":     user.Realname,
 		"email":        user.Email,
 		"introduction": user.Intro,
 	})

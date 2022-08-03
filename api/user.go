@@ -125,7 +125,7 @@ func UserLogin(c *gin.Context) {
 	var loginUser entity.User
 	var selectErr error
 	if flag == 0 {
-		selectErr = entity.Db.Find(&loginUser, "nickname=?", username).Error
+		selectErr = entity.Db.Find(&loginUser, "user_id=?", username).Error
 	} else {
 		selectErr = entity.Db.Find(&loginUser, "email=?", email).Error
 	}

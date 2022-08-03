@@ -408,7 +408,7 @@ func TeamModifyAvatar(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&team).Update("url", filename)
+	entity.Db.Model(&team).Where("team_id=?", teamId).Update("url", filename)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})

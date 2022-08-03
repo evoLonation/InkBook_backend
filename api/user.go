@@ -138,7 +138,7 @@ func UserLogin(c *gin.Context) {
 	}
 	if loginUser.Password != password {
 		c.JSON(http.StatusConflict, gin.H{
-			"msg": "密码错误",
+			"msg": "用户名或密码错误",
 		})
 		return
 	}

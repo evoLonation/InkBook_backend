@@ -95,7 +95,7 @@ func TeamModifyName(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&team).Update("name", newName)
+	entity.Db.Model(&team).Where("team_id=?", teamId).Update("name", newName)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
@@ -121,14 +121,14 @@ func TeamModifyIntro(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&team).Update("intro", newIntro)
+	entity.Db.Model(&team).Where("team_id=?", teamId).Update("intro", newIntro)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "更新成功",
 	})
 	return
 }
 func TeamInformation(c *gin.Context) {
-	teamId, ok := c.GetPostForm("teamId")
+	teamId, ok := c.GetQuery("teamId")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
@@ -422,7 +422,7 @@ func TeamGetAvatar(c *gin.Context) {
 		return
 	}
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "teamId=?", teamId).Error
+	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{

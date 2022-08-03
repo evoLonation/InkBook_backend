@@ -46,6 +46,7 @@ func TeamCreate(c *gin.Context) {
 			})
 			return
 		}
+		team.Url = "_defaultavatar.webp"
 		entity.Db.Create(&team)
 		teamMember := entity.TeamMember{
 			TeamId:   team.ID,
@@ -476,7 +477,7 @@ func Confirm(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	userId := teamInfoRequest.UserId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "teamId=?", teamId).Error
+	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -525,16 +526,18 @@ func Apply(c *gin.Context) {
 		return
 	}
 	var member entity.TeamMember
-	selectErr = entity.Db.Find(&member, "user_id=? and team_id =?", userId, teamId).Error
+	selectErr = entity.Db.First(&member, "member_id=? and team_id =?", userId, teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
 	if selectErr == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"msg": "用户已在团队中",
+		c.JSON(http.StatusOK, gin.H{
+			"msg":  "用户已在团队中",
+			"code": 1,
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "请求成功",
+		"msg":  "请求成功",
+		"code": 0,
 	})
 	return
 }
@@ -582,11 +585,11 @@ func getIdentity(c *gin.Context) {
 		return
 	}
 	var member entity.TeamMember
-	selectErr := entity.Db.Find(&member, "user_id=? and team_id =?", userId, teamId).Error
+	selectErr := entity.Db.Find(&member, "member_id=? and team_id =?", userId, teamId).Error
 	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr == nil {
+	if selectErr != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"msg": "用户已在团队中",
+			"msg": "用户不在团队中",
 		})
 		return
 	}

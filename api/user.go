@@ -56,6 +56,7 @@ func UserRegister(c *gin.Context) {
 	user.Nickname = userRegisterRequest.Nickname
 	user.Email = userRegisterRequest.Email
 	user.Password = userRegisterRequest.Password
+	user.Url = "_defaultavatar.webp"
 	var temp entity.User
 	//同一邮箱只允许被注册一次
 	entity.Db.Find(&temp, "email=?", user.Email)

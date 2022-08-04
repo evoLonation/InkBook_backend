@@ -343,9 +343,63 @@ func SetAdmin(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&member).Update("identity", 1)
+	entity.Db.Model(&member).Where("team_id=? and member_id=?", teamId, memberId).Update("identity", 1)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "设置成功",
+	})
+	return
+}
+func RemoveAdmin(c *gin.Context) {
+	var teamInfoRequest TeamInfoRequest
+	err := c.ShouldBindJSON(&teamInfoRequest)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	teamId := teamInfoRequest.TeamId
+	operatorId := teamInfoRequest.OperatorId
+	memberId := teamInfoRequest.MemberId
+	var team entity.Team
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "团队不存在",
+		})
+		return
+	}
+	var operator entity.TeamMember
+	entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId)
+	if operator == (entity.TeamMember{}) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "操作者不在团队中",
+		})
+		return
+	}
+	var member entity.TeamMember
+	entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId)
+	if member == (entity.TeamMember{}) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "用户不在团队中",
+		})
+		return
+	}
+	if operator.Identity != 0 {
+		c.JSON(http.StatusConflict, gin.H{
+			"msg": "无设置管理员权限",
+		})
+		return
+	}
+	if member.Identity == 0 {
+		c.JSON(http.StatusConflict, gin.H{
+			"msg": "该用户不是管理员",
+		})
+		return
+	}
+	entity.Db.Model(&member).Where("team_id=? and member_id=?", teamId, memberId).Update("identity", 0)
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "撤销成功",
 	})
 	return
 }

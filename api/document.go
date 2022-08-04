@@ -30,9 +30,9 @@ type DocumentRenameRequest struct {
 }
 
 type DocumentSaveRequest struct {
-	DocID   int    `json:"docId"`
-	UserId  string `json:"userId"`
-	Content gin.H  `json:"content"`
+	DocID   int     `json:"docId"`
+	UserId  string  `json:"userId"`
+	Content []gin.H `json:"content"`
 }
 
 type DocumentExitRequest struct {
@@ -45,8 +45,8 @@ type DocumentApplyEditRequest struct {
 	UserId string `json:"userId"`
 }
 
-var docEditorMap = make(map[int][]string)
-var docEditTimeMap = make(map[int]time.Time)
+//var docEditorMap = make(map[int][]string)
+//var docEditTimeMap = make(map[int]time.Time)
 
 func DocumentCreate(ctx *gin.Context) {
 	var request DocumentCreateRequest
@@ -506,4 +506,7 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	//	})
 	//	return
 	//}
+	//
+	//editors := docEditorMap[request.DocID]
+
 }

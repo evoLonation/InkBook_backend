@@ -287,9 +287,8 @@ func Transfer(c *gin.Context) {
 		})
 		return
 	}
-	temp := operator.Identity
-	entity.Db.Model(&operator).Where("team_id=? and member_id=?", teamId, memberId).Update("identity", member.Identity)
-	entity.Db.Model(&member).Where("team_id=? and member_id=?", teamId, memberId).Update("identity", temp)
+	entity.Db.Model(&operator).Where("team_id=? and member_id=?", teamId, operatorId).Update("identity", 2)
+	entity.Db.Model(&member).Where("team_id=? and member_id=?", teamId, memberId).Update("identity", 1)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "转移成功",
 	})

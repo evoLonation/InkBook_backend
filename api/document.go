@@ -40,6 +40,14 @@ type DocumentExitRequest struct {
 	UserId string `json:"userId"`
 }
 
+type DocumentApplyEditRequest struct {
+	DocID  int    `json:"docId"`
+	UserId string `json:"userId"`
+}
+
+var docEditorMap = make(map[int][]string)
+var docEditTimeMap = make(map[int]time.Time)
+
 func DocumentCreate(ctx *gin.Context) {
 	var request DocumentCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -51,7 +59,7 @@ func DocumentCreate(ctx *gin.Context) {
 	entity.Db.Find(&document, "name = ?", request.Name)
 	if document.DocID != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档已存在",
+			"msg": "文档已存在",
 		})
 		return
 	}
@@ -95,13 +103,13 @@ func DocumentDelete(ctx *gin.Context) {
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不存在",
+			"msg": "文档不存在",
 		})
 		return
 	}
 	if document.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档已删除",
+			"msg": "文档已删除",
 		})
 		return
 	}
@@ -133,7 +141,7 @@ func DocumentCompleteDelete(ctx *gin.Context) {
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不存在",
+			"msg": "文档不存在",
 		})
 		return
 	}
@@ -162,7 +170,7 @@ func DocumentRename(ctx *gin.Context) {
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不存在",
+			"msg": "文档不存在",
 		})
 		return
 	}
@@ -171,7 +179,7 @@ func DocumentRename(ctx *gin.Context) {
 	entity.Db.Where("name = ? and project_id = ?", request.NewName, document.ProjectID).Find(&documents)
 	if len(documents) != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档名称重复",
+			"msg": "文档名称重复",
 		})
 		return
 	}
@@ -193,7 +201,7 @@ func DocumentList(ctx *gin.Context) {
 	projectId, ok := ctx.GetQuery("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "projectId不能为空",
+			"msg": "projectId不能为空",
 		})
 		return
 	}
@@ -237,7 +245,7 @@ func DocumentRecycle(ctx *gin.Context) {
 	projectId, ok := ctx.GetQuery("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "projectId不能为空",
+			"msg": "projectId不能为空",
 		})
 		return
 	}
@@ -288,13 +296,13 @@ func DocumentRecover(ctx *gin.Context) {
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不存在",
+			"msg": "文档不存在",
 		})
 		return
 	}
 	if !document.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不在回收站中",
+			"msg": "文档不在回收站中",
 		})
 		return
 	}
@@ -323,7 +331,7 @@ func DocumentSave(ctx *gin.Context) {
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不存在",
+			"msg": "文档不存在",
 		})
 		return
 	}
@@ -342,7 +350,7 @@ func DocumentSave(ctx *gin.Context) {
 	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档保存失败",
+			"msg": "文档保存失败",
 		})
 		return
 	}
@@ -362,19 +370,19 @@ func DocumentExit(ctx *gin.Context) {
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不存在",
+			"msg": "文档不存在",
 		})
 		return
 	}
 	if document.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档在回收站中",
+			"msg": "文档在回收站中",
 		})
 		return
 	}
 	if !document.IsEditing {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不在编辑状态",
+			"msg": "文档不在编辑状态",
 		})
 		return
 	}
@@ -382,7 +390,7 @@ func DocumentExit(ctx *gin.Context) {
 	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("editing_cnt", document.EditingCnt-1)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档退出编辑失败",
+			"msg": "文档退出编辑失败",
 		})
 		return
 	}
@@ -390,7 +398,7 @@ func DocumentExit(ctx *gin.Context) {
 		result = entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_editing", false)
 		if result.Error != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": "文档退出编辑失败",
+				"msg": "文档退出编辑失败",
 			})
 			return
 		}
@@ -401,7 +409,7 @@ func DocumentExit(ctx *gin.Context) {
 	result = entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档退出编辑失败",
+			"msg": "文档退出编辑失败",
 		})
 		return
 	}
@@ -415,7 +423,7 @@ func DocumentGet(ctx *gin.Context) {
 	docId, ok := ctx.GetQuery("docId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "docId不能为空",
+			"msg": "docId不能为空",
 		})
 		return
 	}
@@ -424,13 +432,13 @@ func DocumentGet(ctx *gin.Context) {
 	entity.Db.Find(&document, "doc_id = ?", docId)
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档不存在",
+			"msg": "文档不存在",
 		})
 		return
 	}
 	if document.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档在回收站中，无法编辑",
+			"msg": "文档在回收站中，无法编辑",
 		})
 		return
 	}
@@ -439,7 +447,7 @@ func DocumentGet(ctx *gin.Context) {
 		result := entity.Db.Model(&document).Where("doc_id = ?", docId).Update("editing_cnt", document.EditingCnt+1)
 		if result.Error != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": "文档获取失败",
+				"msg": "文档获取失败",
 			})
 			return
 		}
@@ -452,14 +460,14 @@ func DocumentGet(ctx *gin.Context) {
 	result := entity.Db.Model(&document).Where("doc_id = ?", docId).Update("is_editing", true)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档获取失败",
+			"msg": "文档获取失败",
 		})
 		return
 	}
 	result = entity.Db.Model(&document).Where("doc_id = ?", docId).Update("editing_cnt", document.EditingCnt+1)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "文档获取失败",
+			"msg": "文档获取失败",
 		})
 		return
 	}
@@ -467,7 +475,7 @@ func DocumentGet(ctx *gin.Context) {
 	var jsonContent gin.H
 	if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "JSON格式内容解析失败",
+			"msg": "JSON格式内容解析失败",
 		})
 		return
 	}
@@ -475,4 +483,27 @@ func DocumentGet(ctx *gin.Context) {
 		"msg":     "文档获取成功",
 		"content": jsonContent,
 	})
+}
+
+func DocumentApplyEdit(ctx *gin.Context) {
+	//var request DocumentApplyEditRequest
+	//if err := ctx.ShouldBindJSON(&request); err != nil {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	//	return
+	//}
+	//
+	//var document entity.Document
+	//entity.Db.Find(&document, "doc_id = ?", request.DocID)
+	//if document.DocID == 0 {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{
+	//		"msg": "文档不存在",
+	//	})
+	//	return
+	//}
+	//if document.IsDeleted {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{
+	//		"msg": "文档已被删除中",
+	//	})
+	//	return
+	//}
 }

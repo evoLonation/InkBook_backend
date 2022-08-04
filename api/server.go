@@ -75,6 +75,7 @@ func Start(address string) {
 		documentGroup.POST("/save", DocumentSave)
 		documentGroup.POST("/exit", DocumentExit)
 		documentGroup.GET("/get", DocumentGet)
+		documentGroup.POST("/apply-edit", DocumentApplyEdit)
 	}
 
 	//graph

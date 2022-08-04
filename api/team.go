@@ -636,3 +636,29 @@ func getIdentity(c *gin.Context) {
 		"identity": member.Identity,
 	})
 }
+func SearchTeam(c *gin.Context) {
+	key, ok := c.GetQuery("key")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	key = key + "%"
+	var teams []entity.Team
+	entity.Db.Where("name like ?", key).Debug().Find(&teams)
+	var teamList []gin.H
+	for _, team := range teams {
+		projectJson := gin.H{
+			"name":   team.Name,
+			"intro":  team.Intro,
+			"teamId": team.TeamId,
+			"url":    team.Url,
+		}
+		teamList = append(teamList, projectJson)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"msg":   "查找成功",
+		"teams": teamList,
+	})
+}

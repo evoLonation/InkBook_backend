@@ -45,8 +45,8 @@ type DocumentApplyEditRequest struct {
 	UserId string `json:"userId"`
 }
 
-//var docEditorMap = make(map[int][]string)
-//var docEditTimeMap = make(map[int]time.Time)
+var docEditorMap = make(map[int][]string)
+var docEditTimeMap = make(map[int]time.Time)
 
 func DocumentCreate(ctx *gin.Context) {
 	var request DocumentCreateRequest
@@ -344,7 +344,7 @@ func DocumentSave(ctx *gin.Context) {
 		})
 		return
 	}
-	document.Content = string(jsonContent)
+	document.Content = "{\"content\":" + string(jsonContent) + "}"
 	document.ModifierID = request.UserId
 	document.ModifyTime = time.Now()
 	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
@@ -380,33 +380,26 @@ func DocumentExit(ctx *gin.Context) {
 		})
 		return
 	}
-	if !document.IsEditing {
+
+	if time.Now().Sub(docEditTimeMap[request.DocID]) > time.Second*3 {
+		docEditorMap[request.DocID] = []string{}
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不在编辑状态",
 		})
 		return
 	}
 
-	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("editing_cnt", document.EditingCnt-1)
-	if result.Error != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "文档退出编辑失败",
-		})
-		return
-	}
-	if document.EditingCnt == 0 {
-		result = entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_editing", false)
-		if result.Error != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"msg": "文档退出编辑失败",
-			})
-			return
+	editors := docEditorMap[request.DocID]
+	for i, editor := range editors {
+		if editor == request.UserId {
+			editors = append(editors[:i], editors[i+1:]...)
+			break
 		}
 	}
 
 	document.ModifierID = request.UserId
 	document.ModifyTime = time.Now()
-	result = entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档退出编辑失败",
@@ -415,7 +408,7 @@ func DocumentExit(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":    "文档退出编辑成功",
-		"remain": document.EditingCnt,
+		"remain": len(editors),
 	})
 }
 
@@ -486,27 +479,68 @@ func DocumentGet(ctx *gin.Context) {
 }
 
 func DocumentApplyEdit(ctx *gin.Context) {
-	//var request DocumentApplyEditRequest
-	//if err := ctx.ShouldBindJSON(&request); err != nil {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	//	return
-	//}
-	//
-	//var document entity.Document
-	//entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	//if document.DocID == 0 {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{
-	//		"msg": "文档不存在",
-	//	})
-	//	return
-	//}
-	//if document.IsDeleted {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{
-	//		"msg": "文档已被删除中",
-	//	})
-	//	return
-	//}
-	//
-	//editors := docEditorMap[request.DocID]
+	var request DocumentApplyEditRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", request.DocID)
+	if document.DocID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "文档不存在",
+		})
+		return
+	}
+	if document.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "文档已被删除",
+		})
+		return
+	}
+
+	var jsonContent gin.H
+	if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "JSON格式内容解析失败",
+		})
+		return
+	}
+
+	editors := docEditorMap[request.DocID]
+	if len(editors) == 0 {
+		docEditorMap[request.DocID] = append(editors, request.UserId)
+		docEditTimeMap[request.DocID] = time.Now()
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg":     "文档获取成功",
+			"content": jsonContent["content"],
+		})
+		return
+	} else {
+		if time.Now().Sub(docEditTimeMap[request.DocID]) > time.Second*3 {
+			docEditorMap[request.DocID] = []string{request.UserId}
+			docEditTimeMap[request.DocID] = time.Now()
+			ctx.JSON(http.StatusOK, gin.H{
+				"msg":     "文档获取成功，正在编辑",
+				"content": jsonContent["content"],
+			})
+			return
+		} else {
+			docEditTimeMap[request.DocID] = time.Now()
+			for _, editor := range editors {
+				if editor == request.UserId {
+					ctx.JSON(http.StatusConflict, gin.H{
+						"msg": "文档获取成功，正在编辑",
+					})
+					return
+				}
+			}
+			docEditorMap[request.DocID] = append(editors, request.UserId)
+			ctx.JSON(http.StatusOK, gin.H{
+				"msg": "文档获取成功，正在编辑",
+			})
+			return
+		}
+	}
 }

@@ -17,4 +17,5 @@ type Graph struct {
 	DeleterID  string    `gorm:"column:deleter_id" json:"deleterId"`
 	DeleteTime time.Time `gorm:"column:delete_time" json:"deleteTime"`
 	Content    string    `gorm:"column:content" json:"content"`
+	EditingCnt int       `gorm:"column:editing_cnt" json:"editingCnt"`
 }

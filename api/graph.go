@@ -227,7 +227,8 @@ func GraphList(ctx *gin.Context) {
 	}
 	if len(graphList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
-			"msg": "当前项目没有UML图",
+			"msg":       "当前项目没有UML图",
+			"graphList": graphList,
 		})
 		return
 	}
@@ -271,7 +272,8 @@ func GraphRecycle(ctx *gin.Context) {
 	}
 	if len(graphList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
-			"msg": "当前回收站没有UML图",
+			"msg":       "当前回收站没有UML图",
+			"graphList": graphList,
 		})
 		return
 	}

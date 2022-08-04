@@ -500,9 +500,6 @@ func TeamGetAvatar(c *gin.Context) {
 		return
 	}
 	c.File("./localFile/team/" + team.Url)
-	c.JSON(http.StatusOK, gin.H{
-		"msg": "成功",
-	})
 }
 func Confirm(c *gin.Context) {
 	var teamInfoRequest TeamInfoRequest

@@ -224,3 +224,7 @@ func DocumentRecover(ctx *gin.Context) {
 		"msg": "文档恢复成功",
 	})
 }
+
+func DocumentSave(ctx *gin.Context) {
+
+}

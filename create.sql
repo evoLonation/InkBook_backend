@@ -85,7 +85,7 @@ create table prototypes
     foreign key (modifier_id) references users (user_id) on delete set null
 );
 
-create table graph
+create table graphs
 (
     graph_id    int primary key auto_increment not null,
     name        varchar(20) not null,

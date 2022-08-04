@@ -435,7 +435,7 @@ func Leave(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Where("team_id = ?and member_id=?", teamId, userId).Delete(&entity.TeamMember{})
+	entity.Db.Where("team_id = ? and member_id=?", teamId, userId).Delete(&entity.TeamMember{})
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "离开成功",
 	})

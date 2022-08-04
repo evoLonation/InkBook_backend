@@ -39,6 +39,11 @@ type GraphSaveRequest struct {
 	Content gin.H  `json:"content"`
 }
 
+type GraphExitRequest struct {
+	GraphID int    `json:"graphId"`
+	UserId  string `json:"userId"`
+}
+
 func GraphCreate(ctx *gin.Context) {
 	var request GraphCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -281,7 +286,63 @@ func GraphSave(ctx *gin.Context) {
 }
 
 func GraphExit(ctx *gin.Context) {
+	var request GraphExitRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不存在",
+		})
+		return
+	}
+	if graph.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图在回收站中",
+		})
+		return
+	}
+	if !graph.IsEditing {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不在编辑状态",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&graph).Where("graph_id = ?", request.GraphID).Update("editing_cnt", graph.EditingCnt-1)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "UML图退出编辑失败",
+		})
+		return
+	}
+	if graph.EditingCnt == 0 {
+		result = entity.Db.Model(&graph).Where("graph_id = ?", request.GraphID).Update("is_editing", false)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"msg": "UML图退出编辑失败",
+			})
+			return
+		}
+	}
+
+	graph.ModifierID = request.UserId
+	graph.ModifyTime = time.Now()
+	result = entity.Db.Model(&graph).Where("graph_id = ?", request.GraphID).Updates(&graph)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "UML图退出编辑失败",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":    "UML图退出编辑成功",
+		"remain": graph.EditingCnt,
+	})
 }
 
 func GraphGet(ctx *gin.Context) {

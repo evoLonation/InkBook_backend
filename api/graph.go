@@ -346,5 +346,68 @@ func GraphExit(ctx *gin.Context) {
 }
 
 func GraphGet(ctx *gin.Context) {
+	graphId, ok := ctx.GetQuery("graphId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "graphId不能为空",
+		})
+		return
+	}
 
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", graphId)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不存在",
+		})
+		return
+	}
+	if graph.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图在回收站中, 无法编辑",
+		})
+		return
+	}
+
+	if graph.IsEditing {
+		result := entity.Db.Model(&graph).Where("graph_id = ?", graphId).Update("editing_cnt", graph.EditingCnt+1)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"msg": "UML图获取失败",
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "UML图正在编辑",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&graph).Where("graph_id = ?", graphId).Update("is_editing", true)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "UML图获取失败",
+		})
+		return
+	}
+	result = entity.Db.Model(&graph).Where("graph_id = ?", graphId).Update("editing_cnt", graph.EditingCnt+1)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "UML图获取失败",
+		})
+		return
+	}
+
+	var jsonContent gin.H
+	if err := json.Unmarshal([]byte(graph.Content), &jsonContent); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+			"msg":   "JSON格式内容解析失败",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":     "UML图获取成功",
+		"content": jsonContent,
+	})
 }

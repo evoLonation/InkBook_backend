@@ -280,7 +280,57 @@ func DocumentSave(ctx *gin.Context) {
 }
 
 func DocumentExit(ctx *gin.Context) {
+	var request DocumentExitRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", request.DocID)
+	if document.DocID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不存在",
+		})
+		return
+	}
+	if document.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档在回收站中",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("editing_cnt", document.EditingCnt-1)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档退出编辑失败",
+		})
+		return
+	}
+	if document.EditingCnt == 0 {
+		result = entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_editing", false)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": "文档退出编辑失败",
+			})
+			return
+		}
+	}
+
+	document.ModifierID = request.UserId
+	document.ModifyTime = time.Now()
+	result = entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档退出编辑失败",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":    "文档退出编辑成功",
+		"remain": document.EditingCnt,
+	})
 }
 
 func DocumentGet(ctx *gin.Context) {
@@ -297,6 +347,12 @@ func DocumentGet(ctx *gin.Context) {
 	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "文档不存在",
+		})
+		return
+	}
+	if document.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档在回收站中，无法编辑",
 		})
 		return
 	}

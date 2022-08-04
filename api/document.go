@@ -181,7 +181,14 @@ func DocumentRename(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("name", request.NewName)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("name", request.NewName)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "文档重命名失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "文档重命名成功",
 	})

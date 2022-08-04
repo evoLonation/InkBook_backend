@@ -140,7 +140,41 @@ func GraphCompleteDelete(ctx *gin.Context) {
 }
 
 func GraphRename(ctx *gin.Context) {
+	var request GraphRenameRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不存在",
+		})
+		return
+	}
+
+	var graphs []entity.Graph
+	entity.Db.Where("name = ? and project_id = ?", request.NewName, graph.ProjectID).Find(&graphs)
+	if len(graphs) != 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图名称重复",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&graph).Where("graph_id = ?", request.GraphID).Update("name", request.NewName)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "UML图重命名失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "UML图重命名成功",
+	})
 }
 
 func GraphList(ctx *gin.Context) {

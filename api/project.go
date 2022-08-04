@@ -171,8 +171,14 @@ func ProjectRename(ctx *gin.Context) {
 		return
 	}
 
-	project.Name = request.NewName
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	result := entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("name", request.NewName)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目重命名失败",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目重命名成功",
 	})

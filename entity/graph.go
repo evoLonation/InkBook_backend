@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"github.com/gin-gonic/gin"
 	"time"
 )
 
@@ -17,5 +16,5 @@ type Graph struct {
 	IsDeleted  bool      `gorm:"column:is_deleted" json:"isDeleted"`
 	DeleterID  string    `gorm:"column:deleter_id" json:"deleterId"`
 	DeleteTime time.Time `gorm:"column:delete_time" json:"deleteTime"`
-	Content    gin.H     `gorm:"column:content" json:"content"`
+	Content    string    `gorm:"column:content" json:"content"`
 }

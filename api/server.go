@@ -75,7 +75,6 @@ func Start(address string) {
 		documentGroup.POST("/recover", DocumentRecover)
 		documentGroup.POST("/save", DocumentSave)
 		documentGroup.POST("/exit", DocumentExit)
-		documentGroup.GET("/get", DocumentGet)
 		documentGroup.POST("/apply-edit", DocumentApplyEdit)
 		documentGroup.POST("/img", DocumentImg)
 	}

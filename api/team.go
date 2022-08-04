@@ -397,7 +397,7 @@ func RemoveAdmin(c *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Model(&member).Where("team_id=? and member_id=?", teamId, memberId).Update("identity", 0)
+	entity.Db.Model(&member).Where("team_id=? and member_id=?", teamId, memberId).Update("identity", 2)
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "撤销成功",
 	})

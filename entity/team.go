@@ -1,7 +1,7 @@
 package entity
 
 type Team struct {
-	TeamId    int    `json:"teamId"`
+	TeamId    int    `gorm:"team_id" json:"teamId"`
 	Name      string `json:"teamName"`
 	Intro     string `json:"teamIntroductory"`
 	CaptainId string `json:"userId"`

@@ -2,6 +2,7 @@ package api
 
 import (
 	"backend/entity"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
@@ -30,6 +31,12 @@ type GraphRenameRequest struct {
 
 type GraphListRequest struct {
 	ProjectID int `json:"projectId"`
+}
+
+type GraphSaveRequest struct {
+	GraphID int    `json:"graphId"`
+	UserId  string `json:"userId"`
+	Content gin.H  `json:"content"`
 }
 
 func GraphCreate(ctx *gin.Context) {
@@ -234,7 +241,43 @@ func GraphRecover(ctx *gin.Context) {
 }
 
 func GraphSave(ctx *gin.Context) {
+	var request GraphSaveRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不存在",
+		})
+		return
+	}
+
+	jsonContent, err := json.Marshal(request.Content)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+			"msg":   "JSON格式内容解析失败",
+		})
+		return
+	}
+	graph.Content = string(jsonContent)
+	graph.ModifierID = request.UserId
+	graph.ModifyTime = time.Now()
+	result := entity.Db.Where("graph_id = ?", request.GraphID).Updates(&graph)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "UML图保存失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "UML图保存成功",
+	})
 }
 
 func GraphExit(ctx *gin.Context) {

@@ -3,7 +3,6 @@ package api
 import (
 	"backend/entity"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
@@ -320,7 +319,6 @@ func DocumentSave(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Println(request.Content)
 	jsonContent, err := json.Marshal(request.Content)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

@@ -284,5 +284,61 @@ func DocumentExit(ctx *gin.Context) {
 }
 
 func DocumentGet(ctx *gin.Context) {
+	docId, ok := ctx.GetQuery("docId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "docId不能为空",
+		})
+		return
+	}
 
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", docId)
+	if document.DocID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不存在",
+		})
+		return
+	}
+
+	if document.IsEditing {
+		result := entity.Db.Model(&document).Where("doc_id = ?", docId).Update("editing_cnt", document.EditingCnt+1)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": "文档获取失败",
+			})
+			return
+		}
+		ctx.JSON(http.StatusConflict, gin.H{
+			"msg": "文档正在编辑",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&document).Where("doc_id = ?", docId).Update("is_editing", true)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档获取失败",
+		})
+		return
+	}
+	result = entity.Db.Model(&document).Where("doc_id = ?", docId).Update("editing_cnt", document.EditingCnt+1)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档获取失败",
+		})
+		return
+	}
+
+	var jsonContent gin.H
+	if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "JSON格式内容解析失败",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":     "文档获取成功",
+		"content": jsonContent,
+	})
 }

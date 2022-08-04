@@ -50,6 +50,7 @@ type DocumentApplyEditRequest struct {
 
 var docEditorMap = make(map[int][]string)
 var docEditTimeMap = make(map[int]time.Time)
+var docUserTimeMap = make(map[string]time.Time)
 
 func DocumentCreate(ctx *gin.Context) {
 	var request DocumentCreateRequest
@@ -234,7 +235,8 @@ func DocumentList(ctx *gin.Context) {
 	}
 	if len(docList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
-			"msg": "当前项目没有文档",
+			"msg":     "当前项目没有文档",
+			"docList": make([]entity.Document, 0),
 		})
 		return
 	}
@@ -278,7 +280,8 @@ func DocumentRecycle(ctx *gin.Context) {
 	}
 	if len(docList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
-			"msg": "当前回收站没有文档",
+			"msg":     "当前回收站没有文档",
+			"docList": make([]entity.Document, 0),
 		})
 		return
 	}
@@ -393,11 +396,12 @@ func DocumentExit(ctx *gin.Context) {
 	}
 
 	editors := docEditorMap[request.DocID]
-	for i, editor := range editors {
-		if editor == request.UserId {
-			editors = append(editors[:i], editors[i+1:]...)
-			break
+	var nowEditors []string
+	for _, editor := range editors {
+		if editor == request.UserId || time.Now().Sub(docUserTimeMap[editor]) > time.Second*3 {
+			continue
 		}
+		nowEditors = append(nowEditors, editor)
 	}
 
 	document.ModifierID = request.UserId
@@ -411,7 +415,7 @@ func DocumentExit(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":    "文档退出编辑成功",
-		"remain": len(editors),
+		"remain": len(nowEditors),
 	})
 }
 
@@ -512,6 +516,7 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	}
 
 	editors := docEditorMap[request.DocID]
+	docUserTimeMap[request.UserId] = time.Now()
 	if len(editors) == 0 {
 		docEditorMap[request.DocID] = append(editors, request.UserId)
 		docEditTimeMap[request.DocID] = time.Now()
@@ -547,6 +552,7 @@ func DocumentApplyEdit(ctx *gin.Context) {
 		}
 	}
 }
+
 func DocumentImg(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	filename := header.Filename
@@ -566,6 +572,7 @@ func DocumentImg(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/api/url/" + "./localFile/document/" + filename})
 }
+
 func Url(c *gin.Context) {
 	url := c.Param("url")
 	//c.JSON(http.StatusOK, gin.H{"url": url})

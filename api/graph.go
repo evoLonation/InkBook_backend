@@ -27,6 +27,10 @@ type GraphRenameRequest struct {
 	NewName string `json:"newName"`
 }
 
+type GraphListRequest struct {
+	ProjectID int `json:"projectId"`
+}
+
 func GraphCreate(ctx *gin.Context) {
 	var request GraphCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -178,7 +182,36 @@ func GraphRename(ctx *gin.Context) {
 }
 
 func GraphList(ctx *gin.Context) {
+	//projectId, ok := ctx.GetQuery("projectId")
+	//if !ok {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{
+	//		"error": "projectId不能为空",
+	//	})
+	//	return
+	//}
 
+	//var graphs []entity.Graph
+	//var graphList []gin.H
+	//entity.Db.Where("project_id = ?", projectId).Find(&graphs)
+	//sort.SliceStable(graphs, func(i, j int) bool {
+	//	return graphs[i].Name < graphs[j].Name
+	//})
+	//for _, graph := range graphs {
+	//	if graph.IsDeleted {
+	//		continue
+	//	}
+	//	var creator entity.User
+	//	entity.Db.Where("user_id = ?", graph.CreatorID).Find(&creator)
+	//	graphJson := gin.H{
+	//		"graphId": graph.GraphID,
+	//		"name":    graph.Name,
+	//		"creator": gin.H{
+	//	}
+	//}
+	//ctx.JSON(http.StatusOK, gin.H{
+	//	"msg": "UML图列表获取成功",
+	//	"data": graphs,
+	//})
 }
 
 func GraphRecycle(ctx *gin.Context) {

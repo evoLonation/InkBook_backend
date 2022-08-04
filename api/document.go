@@ -30,10 +30,6 @@ type DocumentRenameRequest struct {
 	NewName string `json:"newName"`
 }
 
-type DocumentListRequest struct {
-	ProjectID int `json:"projectId"`
-}
-
 type DocumentSaveRequest struct {
 	DocID   int    `json:"docId"`
 	UserId  string `json:"userId"`
@@ -213,13 +209,16 @@ func DocumentList(ctx *gin.Context) {
 		if document.IsDeleted {
 			continue
 		}
-		var creator entity.User
+		var creator, modifier entity.User
 		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
+		entity.Db.Where("user_id = ?", document.ModifierID).Find(&modifier)
 		documentJson := gin.H{
 			"docId":      document.DocID,
 			"docName":    document.Name,
 			"creatorId":  document.CreatorID,
 			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+			"modifierId": document.ModifierID,
+			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		docList = append(docList, documentJson)
 	}
@@ -253,13 +252,16 @@ func DocumentRecycle(ctx *gin.Context) {
 		if !document.IsDeleted {
 			continue
 		}
-		var creator entity.User
+		var creator, modifier entity.User
 		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
+		entity.Db.Where("user_id = ?", document.ModifierID).Find(&modifier)
 		documentJson := gin.H{
 			"docId":      document.DocID,
 			"docName":    document.Name,
 			"creatorId":  document.CreatorID,
 			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+			"modifierId": document.ModifierID,
+			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		docList = append(docList, documentJson)
 	}

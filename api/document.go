@@ -33,9 +33,9 @@ type DocumentRenameRequest struct {
 }
 
 type DocumentSaveRequest struct {
-	DocID   int     `json:"docId"`
-	UserId  string  `json:"userId"`
-	Content []gin.H `json:"content"`
+	DocID   int    `json:"docId"`
+	UserId  string `json:"userId"`
+	Content gin.H  `json:"content"`
 }
 
 type DocumentExitRequest struct {

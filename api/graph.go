@@ -232,17 +232,88 @@ func GraphList(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":  "UML图列表获取成功",
-		"data": graphList,
+		"msg":       "UML图列表获取成功",
+		"graphList": graphList,
 	})
 }
 
 func GraphRecycle(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "projectId不能为空",
+		})
+		return
+	}
 
+	var graphs []entity.Graph
+	var graphList []gin.H
+	entity.Db.Where("project_id = ?", projectId).Find(&graphs)
+	sort.SliceStable(graphs, func(i, j int) bool {
+		return graphs[i].Name < graphs[j].Name
+	})
+	for _, graph := range graphs {
+		if !graph.IsDeleted {
+			continue
+		}
+		var creator, modifier entity.User
+		entity.Db.Where("user_id = ?", graph.CreatorID).Find(&creator)
+		entity.Db.Where("user_id = ?", graph.ModifierID).Find(&modifier)
+		graphJson := gin.H{
+			"graphId":    graph.GraphID,
+			"name":       graph.Name,
+			"creatorId":  graph.CreatorID,
+			"CreateInfo": string(graph.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
+			"ModifierID": graph.ModifierID,
+			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04:05")) + " by " + modifier.Nickname,
+		}
+		graphList = append(graphList, graphJson)
+	}
+	if len(graphList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前回收站没有UML图",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":       "回收站UML图列表获取成功",
+		"graphList": graphList,
+	})
 }
 
 func GraphRecover(ctx *gin.Context) {
+	var request GraphDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不存在",
+		})
+		return
+	}
+	if !graph.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不在回收站中",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&graph).Where("graph_id = ?", request.GraphID).Update("is_deleted", false)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "UML图恢复失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "UML图恢复成功",
+	})
 }
 
 func GraphSave(ctx *gin.Context) {

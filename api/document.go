@@ -228,6 +228,7 @@ func DocumentList(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
+		"msg":     "文档列表获取成功",
 		"docList": docList,
 	})
 }
@@ -271,6 +272,7 @@ func DocumentRecycle(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
+		"msg":     "回收站文档列表获取成功",
 		"docList": docList,
 	})
 }
@@ -297,7 +299,14 @@ func DocumentRecover(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_deleted", false)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_deleted", false)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "文档恢复失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "文档恢复成功",
 	})

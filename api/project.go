@@ -104,7 +104,14 @@ func ProjectDelete(ctx *gin.Context) {
 
 	project.IsDeleted = true
 	project.DeleteTime = time.Now()
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	result := entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目删除失败",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目删除成功",
 	})
@@ -126,7 +133,14 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Where("project_id = ?", request.ProjectID).Delete(&project)
+	result := entity.Db.Where("project_id = ?", request.ProjectID).Delete(&project)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目删除失败",
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目删除成功",
 	})

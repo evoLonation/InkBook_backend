@@ -111,7 +111,32 @@ func GraphDelete(ctx *gin.Context) {
 }
 
 func GraphCompleteDelete(ctx *gin.Context) {
+	var request GraphCompleteDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "UML图不存在",
+		})
+		return
+	}
+
+	result := entity.Db.Where("graph_id = ?", request.GraphID).Delete(&graph)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "UML图删除失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "UML图删除成功",
+	})
 }
 
 func GraphRename(ctx *gin.Context) {

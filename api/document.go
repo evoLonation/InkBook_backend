@@ -143,7 +143,14 @@ func DocumentCompleteDelete(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Where("doc_id = ?", request.DocID).Delete(&document)
+	result := entity.Db.Where("doc_id = ?", request.DocID).Delete(&document)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "文档删除失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "文档删除成功",
 	})

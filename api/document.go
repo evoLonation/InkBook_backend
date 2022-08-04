@@ -4,7 +4,10 @@ import (
 	"backend/entity"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"sort"
 	"time"
 )
@@ -506,4 +509,23 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	//	})
 	//	return
 	//}
+}
+func DocumentImg(c *gin.Context) {
+	file, header, err := c.Request.FormFile("file")
+	filename := header.Filename
+	out, err := os.Create("./localFile/document/" + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(out *os.File) {
+		err := out.Close()
+		if err != nil {
+
+		}
+	}(out)
+	_, err = io.Copy(out, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/api/url" + "?location=" + "./localFile/document/" + filename})
 }

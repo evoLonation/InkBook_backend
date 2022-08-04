@@ -10,6 +10,7 @@ func Start(address string) {
 
 	// write routers here
 	router.GET("/hello", hello)
+	router.GET("/api/url/:url", Url)
 
 	//user
 	userGroup := router.Group("/api/user")
@@ -76,6 +77,7 @@ func Start(address string) {
 		documentGroup.POST("/exit", DocumentExit)
 		documentGroup.GET("/get", DocumentGet)
 		documentGroup.POST("/apply-edit", DocumentApplyEdit)
+		documentGroup.POST("/img", DocumentImg)
 	}
 
 	//graph

@@ -1,6 +1,8 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
 type Document struct {
 	DocID      int       `gorm:"column:doc_id" json:"docId"`
@@ -14,4 +16,6 @@ type Document struct {
 	IsDeleted  bool      `gorm:"column:is_deleted" json:"isDeleted"`
 	DeleterID  string    `gorm:"column:deleter_id" json:"deleterId"`
 	DeleteTime time.Time `gorm:"column:delete_time" json:"deleteTime"`
+	Content    string    `gorm:"column:content" json:"content"`
+	EditingCnt int       `gorm:"column:editing_cnt" json:"editingCnt"`
 }

@@ -2,6 +2,8 @@ package api
 
 import (
 	"backend/entity"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
@@ -27,6 +29,17 @@ type DocumentListRequest struct {
 	ProjectID int `json:"projectId"`
 }
 
+type DocumentSaveRequest struct {
+	DocID   int    `json:"docId"`
+	UserId  string `json:"userId"`
+	Content gin.H  `json:"content"`
+}
+
+type DocumentExitRequest struct {
+	DocID  int    `json:"docId"`
+	UserId string `json:"userId"`
+}
+
 func DocumentCreate(ctx *gin.Context) {
 	var request DocumentCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -36,7 +49,7 @@ func DocumentCreate(ctx *gin.Context) {
 
 	var document entity.Document
 	entity.Db.Find(&document, "name = ?", request.Name)
-	if document != (entity.Document{}) {
+	if document.DocID != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "文档已存在",
 		})
@@ -54,6 +67,7 @@ func DocumentCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
+		Content:    "{}",
 	}
 	result := entity.Db.Create(&document)
 	if result.Error != nil {
@@ -79,7 +93,7 @@ func DocumentDelete(ctx *gin.Context) {
 
 	var document entity.Document
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document == (entity.Document{}) {
+	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "文档不存在",
 		})
@@ -104,7 +118,7 @@ func DocumentCompleteDelete(ctx *gin.Context) {
 
 	var document entity.Document
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document == (entity.Document{}) {
+	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "文档不存在",
 		})
@@ -206,7 +220,7 @@ func DocumentRecover(ctx *gin.Context) {
 
 	var document entity.Document
 	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document == (entity.Document{}) {
+	if document.DocID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "文档不存在",
 		})
@@ -226,5 +240,49 @@ func DocumentRecover(ctx *gin.Context) {
 }
 
 func DocumentSave(ctx *gin.Context) {
+	var request DocumentSaveRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", request.DocID)
+	if document.DocID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不存在",
+		})
+		return
+	}
+
+	fmt.Println(request.Content)
+	jsonContent, err := json.Marshal(request.Content)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+			"msg":   "JSON格式内容解析失败",
+		})
+		return
+	}
+	document.Content = string(jsonContent)
+	document.ModifierID = request.UserId
+	document.ModifyTime = time.Now()
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档保存失败",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "文档保存成功",
+	})
+}
+
+func DocumentExit(ctx *gin.Context) {
+
+}
+
+func DocumentGet(ctx *gin.Context) {
 
 }

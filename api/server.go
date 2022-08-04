@@ -70,6 +70,8 @@ func Start(address string) {
 		documentGroup.GET("/recycle", DocumentRecycle)
 		documentGroup.POST("/recover", DocumentRecover)
 		documentGroup.POST("/save", DocumentSave)
+		documentGroup.POST("/exit", DocumentExit)
+		documentGroup.GET("/get", DocumentGet)
 	}
 
 	err := router.Run(address)

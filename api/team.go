@@ -45,15 +45,17 @@ func TeamCreate(c *gin.Context) {
 		}
 		team.Url = "_defaultavatar.webp"
 		entity.Db.Create(&team)
+		var temp entity.Team
+		entity.Db.Find(&temp, "name = ?", team.Name)
 		teamMember := entity.TeamMember{
-			TeamId:   team.TeamId,
-			MemberId: team.CaptainId,
+			TeamId:   temp.TeamId,
+			MemberId: temp.CaptainId,
 			Identity: 0,
 		}
 		entity.Db.Create(&teamMember)
 		c.JSON(200, gin.H{
 			"msg":    "创建成功",
-			"teamId": team.TeamId,
+			"teamId": temp.TeamId,
 		})
 		return
 	}

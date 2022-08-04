@@ -262,7 +262,7 @@ func ProjectListTeam(ctx *gin.Context) {
 	if len(projectList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
 			"msg":      "当前团队没有项目",
-			"projects": projectList,
+			"projects": make([]entity.Project, 0),
 		})
 		return
 	}
@@ -309,7 +309,7 @@ func ProjectListUser(ctx *gin.Context) {
 	if len(projectList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
 			"msg":      "当前用户没有项目",
-			"projects": projectList,
+			"projects": make([]entity.Project, 0),
 		})
 		return
 	}
@@ -348,7 +348,7 @@ func ProjectRecycle(ctx *gin.Context) {
 	if len(projectList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
 			"msg":      "当前回收站中没有项目",
-			"projects": projectList,
+			"projects": make([]entity.Project, 0),
 		})
 		return
 	}

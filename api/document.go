@@ -25,6 +25,11 @@ type DocumentCompleteDeleteRequest struct {
 	DocID int `json:"docId"`
 }
 
+type DocumentRenameRequest struct {
+	DocID   int    `json:"docId"`
+	NewName string `json:"newName"`
+}
+
 type DocumentListRequest struct {
 	ProjectID int `json:"projectId"`
 }
@@ -128,6 +133,37 @@ func DocumentCompleteDelete(ctx *gin.Context) {
 	entity.Db.Where("doc_id = ?", request.DocID).Delete(&document)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "文档删除成功",
+	})
+}
+
+func DocumentRename(ctx *gin.Context) {
+	var request DocumentRenameRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", request.DocID)
+	if document.DocID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不存在",
+		})
+		return
+	}
+
+	var documents []entity.Document
+	entity.Db.Where("name = ? and project_id = ?", request.NewName, document.ProjectID).Find(&documents)
+	if len(documents) != 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档名称重复",
+		})
+		return
+	}
+
+	entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("name", request.NewName)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "文档重命名成功",
 	})
 }
 

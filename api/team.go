@@ -471,7 +471,7 @@ func TeamModifyAvatar(c *gin.Context) {
 		return
 	}
 	var team entity.Team
-	entity.Db.Find(&team, "teamId=?", teamId)
+	entity.Db.Find(&team, "team_id=?", teamId)
 	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",

@@ -335,7 +335,7 @@ func SetAdmin(c *gin.Context) {
 		})
 		return
 	}
-	if operator.Identity != 0 {
+	if operator.Identity != 1 {
 		c.JSON(http.StatusConflict, gin.H{
 			"msg": "无设置管理员权限",
 		})

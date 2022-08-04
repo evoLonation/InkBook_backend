@@ -77,6 +77,21 @@ func Start(address string) {
 		documentGroup.GET("/get", DocumentGet)
 	}
 
+	//graph
+	graphGroup := router.Group("/api/graph")
+	{
+		graphGroup.POST("/create", GraphCreate)
+		graphGroup.POST("/delete", GraphDelete)
+		graphGroup.POST("/complete-delete", GraphCompleteDelete)
+		graphGroup.POST("/rename", GraphRename)
+		graphGroup.GET("/list", GraphList)
+		graphGroup.GET("/recycle", GraphRecycle)
+		graphGroup.POST("/recover", GraphRecover)
+		graphGroup.POST("/save", GraphSave)
+		graphGroup.POST("/exit", GraphExit)
+		graphGroup.GET("/get", GraphGet)
+	}
+
 	err := router.Run(address)
 	if err != nil {
 		return

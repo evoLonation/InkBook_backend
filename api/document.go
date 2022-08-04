@@ -104,11 +104,24 @@ func DocumentDelete(ctx *gin.Context) {
 		})
 		return
 	}
+	if document.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档已删除",
+		})
+		return
+	}
 
 	document.IsDeleted = true
 	document.DeleterID = request.DeleterID
 	document.DeleteTime = time.Now()
-	entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "文档删除失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "文档删除成功",
 	})

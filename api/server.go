@@ -10,7 +10,7 @@ func Start(address string) {
 
 	// write routers here
 	router.GET("/hello", hello)
-	router.GET("/api/url/:url", Url)
+	router.GET("/api/url/./localFile/document/:url", Url)
 
 	//user
 	userGroup := router.Group("/api/user")

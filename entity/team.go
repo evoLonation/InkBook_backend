@@ -1,9 +1,9 @@
 package entity
 
 type Team struct {
-	ID        int    `json:"teamId"`
+	TeamId    int    `json:"teamId"`
 	Name      string `json:"teamName"`
 	Intro     string `json:"teamIntroductory"`
-	CaptainID string `json:"userId"`
+	CaptainId string `json:"userId"`
 	Url       string `json:"url"`
 }

@@ -2,10 +2,8 @@ package api
 
 import (
 	"backend/entity"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"io"
 	"log"
 	"math/rand"
@@ -60,7 +58,7 @@ func UserRegister(c *gin.Context) {
 	var temp entity.User
 	//同一邮箱只允许被注册一次
 	entity.Db.Find(&temp, "email=?", user.Email)
-	if temp.UserId != "" {
+	if temp != (entity.User{}) {
 		c.JSON(http.StatusFound, gin.H{
 			"msg":  "该邮箱已被注册",
 			"user": user.Email,
@@ -124,14 +122,12 @@ func UserLogin(c *gin.Context) {
 		flag = 1
 	}
 	var loginUser entity.User
-	var selectErr error
 	if flag == 0 {
-		selectErr = entity.Db.Find(&loginUser, "user_id=?", username).Error
+		entity.Db.Find(&loginUser, "user_id=?", username)
 	} else {
-		selectErr = entity.Db.Find(&loginUser, "email=?", email).Error
+		entity.Db.Find(&loginUser, "email=?", email)
 	}
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	if loginUser == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -160,9 +156,8 @@ func UserInformation(c *gin.Context) {
 	}
 	userId := userLoginRequest.UserId
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -189,9 +184,8 @@ func UserModifyPassword(c *gin.Context) {
 	oldPwd := userInfoRequest.OldPwd
 	newPwd := userInfoRequest.NewPwd
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -228,9 +222,8 @@ func UserModifyEmail(c *gin.Context) {
 		return
 	}
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -253,9 +246,8 @@ func UserModifyIntroduction(c *gin.Context) {
 	userId := userInfoRequest.UserId
 	newIntro := userInfoRequest.NewIntro
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -278,9 +270,8 @@ func UserModifyNickname(c *gin.Context) {
 	userId := userInfoRequest.UserId
 	newNick := userInfoRequest.NewNick
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -303,9 +294,8 @@ func UserModifyRealname(c *gin.Context) {
 	userId := userInfoRequest.UserId
 	newReal := userInfoRequest.NewReal
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -324,27 +314,28 @@ func UserTeam(c *gin.Context) {
 		})
 		return
 	}
-	var teams []entity.Team
-	selectErr := entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("join team_members on team_members.team_id = teams.team_id", userId).Where("user_id=?", userId).Scan(&teams).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	var user entity.User
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
 		return
 	}
+	var teams []entity.Team
+	entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("join team_members on team_members.team_id = teams.team_id", userId).Where("member_id=?", userId).Scan(&teams)
 	var teamList []gin.H
 	for _, team := range teams {
 		projectJson := gin.H{
 			"name":   team.Name,
 			"intro":  team.Intro,
-			"teamId": team.ID,
+			"teamId": team.TeamId,
 		}
 		teamList = append(teamList, projectJson)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"msg":   "查找成功",
-		"teams": teams,
+		"teams": teamList,
 	})
 }
 func UserModifyAvatar(c *gin.Context) {
@@ -372,9 +363,8 @@ func UserModifyAvatar(c *gin.Context) {
 		return
 	}
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
@@ -394,9 +384,8 @@ func UserGetAvatar(c *gin.Context) {
 		return
 	}
 	var user entity.User
-	selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})

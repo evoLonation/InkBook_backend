@@ -37,6 +37,7 @@ func Start(address string) {
 	teamGroup.POST("/remove", Remove)
 	teamGroup.POST("/transfer", Transfer)
 	teamGroup.POST("/setAdmin", SetAdmin)
+	teamGroup.POST("/removeAdmin", RemoveAdmin)
 	teamGroup.POST("/leave", Leave)
 	teamGroup.POST("/modify-avatar", TeamModifyAvatar)
 	teamGroup.GET("/get-avatar", TeamGetAvatar)
@@ -44,6 +45,7 @@ func Start(address string) {
 	teamGroup.POST("/apply", Apply)
 	teamGroup.GET("/getAdminNum", getAdminNum)
 	teamGroup.GET("/getIdentity", getIdentity)
+	teamGroup.GET("/search", SearchTeam)
 
 	//project
 	projectGroup := router.Group("/api/project")

@@ -4,6 +4,7 @@ import (
 	"backend/entity"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"sort"
 	"time"
 )
 
@@ -182,36 +183,46 @@ func GraphRename(ctx *gin.Context) {
 }
 
 func GraphList(ctx *gin.Context) {
-	//projectId, ok := ctx.GetQuery("projectId")
-	//if !ok {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{
-	//		"error": "projectId不能为空",
-	//	})
-	//	return
-	//}
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "projectId不能为空",
+		})
+		return
+	}
 
-	//var graphs []entity.Graph
-	//var graphList []gin.H
-	//entity.Db.Where("project_id = ?", projectId).Find(&graphs)
-	//sort.SliceStable(graphs, func(i, j int) bool {
-	//	return graphs[i].Name < graphs[j].Name
-	//})
-	//for _, graph := range graphs {
-	//	if graph.IsDeleted {
-	//		continue
-	//	}
-	//	var creator entity.User
-	//	entity.Db.Where("user_id = ?", graph.CreatorID).Find(&creator)
-	//	graphJson := gin.H{
-	//		"graphId": graph.GraphID,
-	//		"name":    graph.Name,
-	//		"creator": gin.H{
-	//	}
-	//}
-	//ctx.JSON(http.StatusOK, gin.H{
-	//	"msg": "UML图列表获取成功",
-	//	"data": graphs,
-	//})
+	var graphs []entity.Graph
+	var graphList []gin.H
+	entity.Db.Where("project_id = ?", projectId).Find(&graphs)
+	sort.SliceStable(graphs, func(i, j int) bool {
+		return graphs[i].Name < graphs[j].Name
+	})
+	for _, graph := range graphs {
+		if graph.IsDeleted {
+			continue
+		}
+		var creator entity.User
+		entity.Db.Where("user_id = ?", graph.CreatorID).Find(&creator)
+		graphJson := gin.H{
+			"graphId":    graph.GraphID,
+			"name":       graph.Name,
+			"creatorId":  graph.CreatorID,
+			"CreateInfo": string(graph.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
+			"ModifierID": graph.ModifierID,
+			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
+		}
+		graphList = append(graphList, graphJson)
+	}
+	if len(graphList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg": "当前项目没有UML图",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":  "UML图列表获取成功",
+		"data": graphList,
+	})
 }
 
 func GraphRecycle(ctx *gin.Context) {

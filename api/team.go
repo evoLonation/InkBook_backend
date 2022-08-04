@@ -628,8 +628,9 @@ func getIdentity(c *gin.Context) {
 	var member entity.TeamMember
 	entity.Db.Find(&member, "member_id=? and team_id =?", userId, teamId)
 	if member == (entity.TeamMember{}) {
-		c.JSON(http.StatusNotFound, gin.H{
-			"msg": "用户不在团队中",
+		c.JSON(http.StatusOK, gin.H{
+			"msg":      "用户不在团队中",
+			"identity": 3,
 		})
 		return
 	}

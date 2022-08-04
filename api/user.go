@@ -330,6 +330,7 @@ func UserTeam(c *gin.Context) {
 			"name":   team.Name,
 			"intro":  team.Intro,
 			"teamId": team.TeamId,
+			"url":    team.Url,
 		}
 		teamList = append(teamList, projectJson)
 	}

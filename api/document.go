@@ -300,6 +300,12 @@ func DocumentExit(ctx *gin.Context) {
 		})
 		return
 	}
+	if !document.IsEditing {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "文档不在编辑状态",
+		})
+		return
+	}
 
 	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("editing_cnt", document.EditingCnt-1)
 	if result.Error != nil {

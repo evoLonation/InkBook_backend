@@ -568,5 +568,6 @@ func DocumentImg(c *gin.Context) {
 }
 func Url(c *gin.Context) {
 	url := c.Param("url")
-	c.File(url)
+	//c.JSON(http.StatusOK, gin.H{"url": url})
+	c.File("./localFile/document/" + url)
 }

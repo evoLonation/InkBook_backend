@@ -55,7 +55,7 @@ func GraphCreate(ctx *gin.Context) {
 	entity.Db.Find(&graph, "name = ?", request.Name)
 	if graph != (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图已存在",
+			"msg": "UML图已存在",
 		})
 		return
 	}
@@ -100,13 +100,13 @@ func GraphDelete(ctx *gin.Context) {
 	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
 	if graph == (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不存在",
+			"msg": "UML图不存在",
 		})
 		return
 	}
 	if graph.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图已删除",
+			"msg": "UML图已删除",
 		})
 		return
 	}
@@ -138,7 +138,7 @@ func GraphCompleteDelete(ctx *gin.Context) {
 	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
 	if graph == (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不存在",
+			"msg": "UML图不存在",
 		})
 		return
 	}
@@ -167,7 +167,7 @@ func GraphRename(ctx *gin.Context) {
 	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
 	if graph == (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不存在",
+			"msg": "UML图不存在",
 		})
 		return
 	}
@@ -176,7 +176,7 @@ func GraphRename(ctx *gin.Context) {
 	entity.Db.Where("name = ? and project_id = ?", request.NewName, graph.ProjectID).Find(&graphs)
 	if len(graphs) != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图名称重复",
+			"msg": "UML图名称重复",
 		})
 		return
 	}
@@ -198,7 +198,7 @@ func GraphList(ctx *gin.Context) {
 	projectId, ok := ctx.GetQuery("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "projectId不能为空",
+			"msg": "projectId不能为空",
 		})
 		return
 	}
@@ -241,7 +241,7 @@ func GraphRecycle(ctx *gin.Context) {
 	projectId, ok := ctx.GetQuery("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "projectId不能为空",
+			"msg": "projectId不能为空",
 		})
 		return
 	}
@@ -292,13 +292,13 @@ func GraphRecover(ctx *gin.Context) {
 	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
 	if graph == (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不存在",
+			"msg": "UML图不存在",
 		})
 		return
 	}
 	if !graph.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不在回收站中",
+			"msg": "UML图不在回收站中",
 		})
 		return
 	}
@@ -327,7 +327,7 @@ func GraphSave(ctx *gin.Context) {
 	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
 	if graph == (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不存在",
+			"msg": "UML图不存在",
 		})
 		return
 	}
@@ -367,19 +367,19 @@ func GraphExit(ctx *gin.Context) {
 	entity.Db.Find(&graph, "graph_id = ?", request.GraphID)
 	if graph == (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不存在",
+			"msg": "UML图不存在",
 		})
 		return
 	}
 	if graph.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图在回收站中",
+			"msg": "UML图在回收站中",
 		})
 		return
 	}
 	if !graph.IsEditing {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不在编辑状态",
+			"msg": "UML图不在编辑状态",
 		})
 		return
 	}
@@ -420,7 +420,7 @@ func GraphGet(ctx *gin.Context) {
 	graphId, ok := ctx.GetQuery("graphId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "graphId不能为空",
+			"msg": "graphId不能为空",
 		})
 		return
 	}
@@ -429,13 +429,13 @@ func GraphGet(ctx *gin.Context) {
 	entity.Db.Find(&graph, "graph_id = ?", graphId)
 	if graph == (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图不存在",
+			"msg": "UML图不存在",
 		})
 		return
 	}
 	if graph.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "UML图在回收站中, 无法编辑",
+			"msg": "UML图在回收站中, 无法编辑",
 		})
 		return
 	}

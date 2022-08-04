@@ -2,9 +2,7 @@ package api
 
 import (
 	"backend/entity"
-	"errors"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"io"
 	"log"
 	"net/http"
@@ -36,11 +34,10 @@ func TeamCreate(c *gin.Context) {
 		})
 		return
 	} else {
-		userId := team.CaptainID
+		userId := team.CaptainId
 		var user entity.User
-		selectErr := entity.Db.Find(&user, "user_id=?", userId).Error
-		errors.Is(selectErr, gorm.ErrRecordNotFound)
-		if selectErr != nil {
+		entity.Db.Find(&user, "user_id=?", userId)
+		if user == (entity.User{}) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"msg": "用户不存在",
 			})
@@ -49,14 +46,14 @@ func TeamCreate(c *gin.Context) {
 		team.Url = "_defaultavatar.webp"
 		entity.Db.Create(&team)
 		teamMember := entity.TeamMember{
-			TeamId:   team.ID,
-			MemberId: team.CaptainID,
+			TeamId:   team.TeamId,
+			MemberId: team.CaptainId,
 			Identity: 0,
 		}
 		entity.Db.Create(&teamMember)
 		c.JSON(200, gin.H{
 			"msg":    "创建成功",
-			"teamId": team.ID,
+			"teamId": team.TeamId,
 		})
 		return
 	}
@@ -73,15 +70,14 @@ func TeamDismiss(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	userId := teamInfoRequest.UserId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
-	if team.CaptainID != userId {
+	if team.CaptainId != userId {
 		c.JSON(http.StatusConflict, gin.H{
 			"msg": "该用户非该团队队长",
 		})
@@ -105,9 +101,8 @@ func TeamModifyName(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	newName := teamInfoRequest.NewName
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
@@ -131,9 +126,8 @@ func TeamModifyIntro(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	newIntro := teamInfoRequest.NewIntro
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
@@ -154,9 +148,8 @@ func TeamInformation(c *gin.Context) {
 		return
 	}
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
@@ -179,15 +172,16 @@ func GetMember(c *gin.Context) {
 	}
 	var members []TeamMember
 	id, _ := strconv.Atoi(teamId)
-	//selectErr := entity.Db.Table("users").Select("users.user_id as user_id,users.nickname as name,users.intro as intro,team_members.identity as identity").Joins("join team_members on team_members.member_id = users.user_id where team_members.team_id <> ? ", id).Scan(&members).Error
-	selectErr := entity.Db.Table("users").Select("users.user_id as user_id,users.nickname as name,users.intro as intro,team_members.identity as identity").Joins("join team_members on team_members.member_id = users.user_id ").Where("team_id = ?", id).Scan(&members).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	var team entity.Team
+	entity.Db.Find(&team, "team_id=?", id)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
+	//selectErr := entity.Db.Table("users").Select("users.user_id as user_id,users.nickname as name,users.intro as intro,team_members.identity as identity").Joins("join team_members on team_members.member_id = users.user_id where team_members.team_id <> ? ", id).Scan(&members).Error
+	entity.Db.Table("users").Select("users.user_id as user_id,users.nickname as name,users.intro as intro,team_members.identity as identity").Joins("join team_members on team_members.member_id = users.user_id ").Where("team_id = ?", id).Scan(&members)
 	var memberList []gin.H
 	for _, member := range members {
 		projectJson := gin.H{
@@ -216,27 +210,24 @@ func Remove(c *gin.Context) {
 	operatorId := teamInfoRequest.OperatorId
 	memberId := teamInfoRequest.MemberId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
 	var operator entity.TeamMember
-	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId)
+	if operator == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "操作者不在团队中",
 		})
 		return
 	}
 	var member entity.TeamMember
-	selectErr = entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId)
+	if member == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不在团队中",
 		})
@@ -267,27 +258,24 @@ func Transfer(c *gin.Context) {
 	operatorId := teamInfoRequest.OperatorId
 	memberId := teamInfoRequest.MemberId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
 	var operator entity.TeamMember
-	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId)
+	if operator == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "操作者不在团队中",
 		})
 		return
 	}
 	var member entity.TeamMember
-	selectErr = entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId)
+	if member == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不在团队中",
 		})
@@ -320,27 +308,24 @@ func SetAdmin(c *gin.Context) {
 	operatorId := teamInfoRequest.OperatorId
 	memberId := teamInfoRequest.MemberId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
 	var operator entity.TeamMember
-	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, operatorId)
+	if operator == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "操作者不在团队中",
 		})
 		return
 	}
 	var member entity.TeamMember
-	selectErr = entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&member, "team_id=? and member_id=?", teamId, memberId)
+	if member == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不在团队中",
 		})
@@ -376,18 +361,16 @@ func Leave(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	userId := teamInfoRequest.UserId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
 	var operator entity.TeamMember
-	selectErr = entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&operator, "team_id=? and member_id=?", teamId, userId)
+	if operator == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不在团队中",
 		})
@@ -430,9 +413,8 @@ func TeamModifyAvatar(c *gin.Context) {
 		return
 	}
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "teamId=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "teamId=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
@@ -452,9 +434,8 @@ func TeamGetAvatar(c *gin.Context) {
 		return
 	}
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
@@ -477,9 +458,8 @@ func Confirm(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	userId := teamInfoRequest.UserId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
@@ -508,27 +488,24 @@ func Apply(c *gin.Context) {
 	teamId := teamInfoRequest.TeamId
 	userId := teamInfoRequest.UserId
 	var team entity.Team
-	selectErr := entity.Db.Find(&team, "team_id=?", teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
 	var user entity.User
-	selectErr = entity.Db.Find(&user, "user_id=?", userId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&user, "user_id=?", userId)
+	if user == (entity.User{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不存在",
 		})
 		return
 	}
 	var member entity.TeamMember
-	selectErr = entity.Db.First(&member, "member_id=? and team_id =?", userId, teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr == nil {
+	entity.Db.First(&member, "member_id=? and team_id =?", userId, teamId)
+	if member != (entity.TeamMember{}) {
 		c.JSON(http.StatusOK, gin.H{
 			"msg":  "用户已在团队中",
 			"code": 1,
@@ -549,15 +526,16 @@ func getAdminNum(c *gin.Context) {
 		})
 		return
 	}
-	var members []entity.TeamMember
-	selectErr := entity.Db.Where("team_id = ?", teamId).Find(&members).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	var team entity.Team
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
 		})
 		return
 	}
+	var members []entity.TeamMember
+	entity.Db.Where("team_id = ?", teamId).Find(&members)
 	var cnt = 0
 	for _, member := range members {
 		if member.Identity == 1 {
@@ -584,10 +562,17 @@ func getIdentity(c *gin.Context) {
 		})
 		return
 	}
+	var team entity.Team
+	entity.Db.Find(&team, "team_id=?", teamId)
+	if team == (entity.Team{}) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"msg": "团队不存在",
+		})
+		return
+	}
 	var member entity.TeamMember
-	selectErr := entity.Db.Find(&member, "member_id=? and team_id =?", userId, teamId).Error
-	errors.Is(selectErr, gorm.ErrRecordNotFound)
-	if selectErr != nil {
+	entity.Db.Find(&member, "member_id=? and team_id =?", userId, teamId)
+	if member == (entity.TeamMember{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "用户不在团队中",
 		})

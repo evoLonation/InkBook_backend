@@ -186,11 +186,14 @@ func GetMember(c *gin.Context) {
 	entity.Db.Table("users").Select("users.user_id as user_id,users.nickname as name,users.intro as intro,team_members.identity as identity").Joins("join team_members on team_members.member_id = users.user_id ").Where("team_id = ?", id).Scan(&members)
 	var memberList []gin.H
 	for _, member := range members {
+		var user entity.User
+		entity.Db.Find(&user, "user_id=?", member.UserId)
 		projectJson := gin.H{
 			"name":     member.Name,
 			"intro":    member.Intro,
 			"userId":   member.UserId,
 			"identity": member.Identity,
+			"url":      user.Url,
 		}
 		memberList = append(memberList, projectJson)
 	}
@@ -468,7 +471,7 @@ func TeamModifyAvatar(c *gin.Context) {
 		return
 	}
 	var team entity.Team
-	entity.Db.Find(&team, "teamId=?", teamId)
+	entity.Db.Find(&team, "team_id=?", teamId)
 	if team == (entity.Team{}) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"msg": "团队不存在",
@@ -497,9 +500,6 @@ func TeamGetAvatar(c *gin.Context) {
 		return
 	}
 	c.File("./localFile/team/" + team.Url)
-	c.JSON(http.StatusOK, gin.H{
-		"msg": "成功",
-	})
 }
 func Confirm(c *gin.Context) {
 	var teamInfoRequest TeamInfoRequest

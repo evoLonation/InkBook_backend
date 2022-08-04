@@ -540,7 +540,7 @@ func DocumentApplyEdit(ctx *gin.Context) {
 				}
 			}
 			docEditorMap[request.DocID] = append(editors, request.UserId)
-			ctx.JSON(http.StatusOK, gin.H{
+			ctx.JSON(http.StatusConflict, gin.H{
 				"msg": "文档获取成功，正在编辑",
 			})
 			return

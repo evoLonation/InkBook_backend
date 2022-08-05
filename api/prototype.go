@@ -44,9 +44,9 @@ type ProtoApplyEditRequest struct {
 	UserId  string `json:"userId"`
 }
 
-//var protoEditorMap = make(map[int][]string)
-//var protoEditTimeMap = make(map[int]time.Time)
-//var protoUserTimeMap = make(map[string]time.Time)
+var protoEditorMap = make(map[int][]string)
+var protoEditTimeMap = make(map[int]time.Time)
+var protoUserTimeMap = make(map[string]time.Time)
 
 func PrototypeCreate(ctx *gin.Context) {
 	var request PrototypeCreateRequest
@@ -269,10 +269,56 @@ func PrototypeSave(ctx *gin.Context) {
 	prototype.Content = "{\"content\":\"" + prototype.Content + "\"}"
 	prototype.ModifierID = request.UserId
 	prototype.ModifyTime = time.Now()
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Updates(&prototype)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型保存失败",
+			"err": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "原型保存成功",
+	})
 }
 
 func PrototypeExit(ctx *gin.Context) {
+	var request ProtoExitRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
+	if prototype.ProtoID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+	if prototype.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型在回收站中",
+		})
+		return
+	}
+
+	if time.Now().Sub(protoEditTimeMap[request.ProtoID]) > time.Second*3 {
+		protoEditorMap[request.ProtoID] = []string{}
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不在编辑状态",
+		})
+		return
+	}
+
+	//editors := protoEditorMap[request.ProtoID]
+	//var nowEditors []string
+	//for _, editor := range editors {
+	//	if editor == request.UserId || time.Now().Sub(protoUserTimeMap[editor]) > time.Second*3 {
+	//
+	//	}
+	//}
 }
 
 func PrototypeGet(ctx *gin.Context) {

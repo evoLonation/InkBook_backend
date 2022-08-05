@@ -2,7 +2,6 @@ package api
 
 import (
 	"backend/entity"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -79,7 +78,7 @@ func DocumentCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
-		Content:    "{\"content\": \"[]\"}",
+		Content:    "",
 	}
 	result := entity.Db.Create(&document)
 	if result.Error != nil {
@@ -342,7 +341,7 @@ func DocumentSave(ctx *gin.Context) {
 		return
 	}
 
-	document.Content = "{\"content\":\"" + string(request.Content) + "\"}"
+	document.Content = request.Content
 	document.ModifierID = request.UserId
 	document.ModifyTime = time.Now()
 	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
@@ -435,16 +434,16 @@ func DocumentGet(ctx *gin.Context) {
 		return
 	}
 
-	var jsonContent gin.H
-	if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "JSON格式内容解析失败",
-		})
-		return
-	}
+	//var jsonContent gin.H
+	//if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{
+	//		"msg": "JSON格式内容解析失败",
+	//	})
+	//	return
+	//}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":     "文档获取成功",
-		"content": jsonContent["content"],
+		"content": document.Content,
 	})
 }
 

@@ -2,7 +2,6 @@ package api
 
 import (
 	"backend/entity"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
@@ -80,7 +79,7 @@ func GraphCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
-		Content:    "{\"content\": \"[]\"}",
+		Content:    "",
 		EditingCnt: 0,
 	}
 	result := entity.Db.Create(&graph)
@@ -343,7 +342,7 @@ func GraphSave(ctx *gin.Context) {
 		return
 	}
 
-	graph.Content = "{\"content\":\"" + request.Content + "\"}"
+	graph.Content = request.Content
 	graph.ModifierID = request.UserId
 	graph.ModifyTime = time.Now()
 	result := entity.Db.Where("graph_id = ?", request.GraphID).Updates(&graph)
@@ -435,17 +434,9 @@ func GraphGet(ctx *gin.Context) {
 		return
 	}
 
-	var jsonContent gin.H
-	if err := json.Unmarshal([]byte(graph.Content), &jsonContent); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg":   "JSON格式内容解析失败",
-			"error": err.Error(),
-		})
-		return
-	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":     "UML图获取成功",
-		"content": jsonContent["content"],
+		"content": graph.Content,
 	})
 }
 

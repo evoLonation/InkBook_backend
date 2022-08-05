@@ -243,11 +243,83 @@ func PrototypeList(ctx *gin.Context) {
 }
 
 func PrototypeRecycle(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "projectId不能为空",
+		})
+		return
+	}
 
+	var prototypes []entity.Prototype
+	var prototypeList []gin.H
+	entity.Db.Where("project_id = ?", projectId).Find(&prototypes)
+	sort.SliceStable(prototypes, func(i, j int) bool {
+		return prototypes[i].Name < prototypes[j].Name
+	})
+	for _, prototype := range prototypes {
+		if !prototype.IsDeleted {
+			continue
+		}
+		var creator, modifier entity.User
+		entity.Db.Where("user_id = ?", prototype.CreatorID).First(&creator)
+		entity.Db.Where("user_id = ?", prototype.ModifierID).First(&modifier)
+		prototypeJson := gin.H{
+			"protoId":    prototype.ProtoID,
+			"protoName":  prototype.Name,
+			"creatorId":  prototype.CreatorID,
+			"createInfo": string(prototype.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+			"modifierId": prototype.ModifierID,
+			"modifyInfo": string(prototype.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
+		}
+		prototypeList = append(prototypeList, prototypeJson)
+	}
+	if len(prototypeList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg":       "当前项目回收站没有原型",
+			"protoList": make([]entity.Prototype, 0),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":       "回收站原型列表获取成功",
+		"protoList": prototypeList,
+	})
 }
 
 func PrototypeRecover(ctx *gin.Context) {
+	var request PrototypeDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
+	if prototype.ProtoID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+	if !prototype.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不在回收站中",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Update("is_deleted", false)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型恢复失败",
+			"err": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "原型恢复成功",
+	})
 }
 
 func PrototypeSave(ctx *gin.Context) {

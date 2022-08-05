@@ -93,6 +93,7 @@ func Start(address string) {
 		graphGroup.POST("/save", GraphSave)
 		graphGroup.POST("/exit", GraphExit)
 		graphGroup.GET("/get", GraphGet)
+		graphGroup.POST("/apply-edit", GraphApplyEdit)
 	}
 
 	err := router.Run(address)

@@ -444,8 +444,8 @@ func GraphGet(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":   "UML图获取成功",
-		"graph": jsonContent["content"],
+		"msg":     "UML图获取成功",
+		"content": jsonContent["content"],
 	})
 }
 

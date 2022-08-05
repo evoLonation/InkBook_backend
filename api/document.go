@@ -3,7 +3,6 @@ package api
 import (
 	"backend/entity"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -344,7 +343,6 @@ func DocumentSave(ctx *gin.Context) {
 	}
 
 	document.Content = "{\"content\":\"" + string(request.Content) + "\"}"
-	fmt.Println(document.Content)
 	document.ModifierID = request.UserId
 	document.ModifyTime = time.Now()
 	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)

@@ -1,5 +1,13 @@
 package api
 
+import (
+	"backend/entity"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"sort"
+	"time"
+)
+
 type PrototypeCreateRequest struct {
 	Name      string `json:"name"`
 	CreatorID string `json:"creatorId"`
@@ -39,433 +47,238 @@ type ProtoApplyEditRequest struct {
 //var protoEditorMap = make(map[int][]string)
 //var protoEditTimeMap = make(map[int]time.Time)
 //var protoUserTimeMap = make(map[string]time.Time)
-//
-//func PrototypeCreate(ctx *gin.Context) {
-//	var request PrototypeCreateRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var prototype entity.Prototype
-//	entity.Db.Find(&prototype, "name = ?", request.Name)
-//	if prototype.Name != "" {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "原型名称已存在",
-//		})
-//		return
-//	}
-//
-//	prototype = entity.Prototype{
-//		Name:       request.Name,
-//		ProjectID:  request.ProjectID,
-//		CreatorID:  request.CreatorID,
-//		CreateTime: time.Now(),
-//		ModifierID: request.CreatorID,
-//		ModifyTime: time.Now(),
-//		IsEditing:  false,
-//		IsDeleted:  false,
-//	}
-//}
-//
-//func PrototypeDelete(ctx *gin.Context) {
-//	var request DocumentDeleteRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//	if document.IsDeleted {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档已删除",
-//		})
-//		return
-//	}
-//
-//	document.IsDeleted = true
-//	document.DeleterID = request.DeleterID
-//	document.DeleteTime = time.Now()
-//	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
-//	if result.Error != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg":   "文档删除失败",
-//			"error": result.Error.Error(),
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg": "文档删除成功",
-//	})
-//}
-//
-//func PrototypeCompleteDelete(ctx *gin.Context) {
-//	var request DocumentCompleteDeleteRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//
-//	result := entity.Db.Where("doc_id = ?", request.DocID).Delete(&document)
-//	if result.Error != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg":   "文档删除失败",
-//			"error": result.Error.Error(),
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg": "文档删除成功",
-//	})
-//}
-//
-//func PrototypeRename(ctx *gin.Context) {
-//	var request DocumentRenameRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//
-//	var documents []entity.Document
-//	entity.Db.Where("name = ? and project_id = ?", request.NewName, document.ProjectID).Find(&documents)
-//	if len(documents) != 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档名称重复",
-//		})
-//		return
-//	}
-//
-//	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("name", request.NewName)
-//	if result.Error != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg":   "文档重命名失败",
-//			"error": result.Error.Error(),
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg": "文档重命名成功",
-//	})
-//}
-//
-//func PrototypeList(ctx *gin.Context) {
-//	projectId, ok := ctx.GetQuery("projectId")
-//	if !ok {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "projectId不能为空",
-//		})
-//		return
-//	}
-//
-//	var documents []entity.Document
-//	var docList []gin.H
-//	entity.Db.Where("project_id = ?", projectId).Find(&documents)
-//	sort.SliceStable(documents, func(i, j int) bool {
-//		return documents[i].Name < documents[j].Name
-//	})
-//	for _, document := range documents {
-//		if document.IsDeleted {
-//			continue
-//		}
-//		var creator, modifier entity.User
-//		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
-//		entity.Db.Where("user_id = ?", document.ModifierID).Find(&modifier)
-//		documentJson := gin.H{
-//			"docId":      document.DocID,
-//			"docName":    document.Name,
-//			"creatorId":  document.CreatorID,
-//			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
-//			"modifierId": document.ModifierID,
-//			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
-//		}
-//		docList = append(docList, documentJson)
-//	}
-//	if len(docList) == 0 {
-//		ctx.JSON(http.StatusOK, gin.H{
-//			"msg":     "当前项目没有文档",
-//			"docList": make([]entity.Document, 0),
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg":     "文档列表获取成功",
-//		"docList": docList,
-//	})
-//}
-//
-//func PrototypeRecycle(ctx *gin.Context) {
-//	projectId, ok := ctx.GetQuery("projectId")
-//	if !ok {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "projectId不能为空",
-//		})
-//		return
-//	}
-//
-//	var documents []entity.Document
-//	var docList []gin.H
-//	entity.Db.Where("project_id = ?", projectId).Find(&documents)
-//	sort.SliceStable(documents, func(i, j int) bool {
-//		return documents[i].Name < documents[j].Name
-//	})
-//	for _, document := range documents {
-//		if !document.IsDeleted {
-//			continue
-//		}
-//		var creator, modifier entity.User
-//		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
-//		entity.Db.Where("user_id = ?", document.ModifierID).Find(&modifier)
-//		documentJson := gin.H{
-//			"docId":      document.DocID,
-//			"docName":    document.Name,
-//			"creatorId":  document.CreatorID,
-//			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
-//			"modifierId": document.ModifierID,
-//			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
-//		}
-//		docList = append(docList, documentJson)
-//	}
-//	if len(docList) == 0 {
-//		ctx.JSON(http.StatusOK, gin.H{
-//			"msg":     "当前回收站没有文档",
-//			"docList": make([]entity.Document, 0),
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg":     "回收站文档列表获取成功",
-//		"docList": docList,
-//	})
-//}
-//
-//func PrototypeRecover(ctx *gin.Context) {
-//	var request DocumentDeleteRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//	if !document.IsDeleted {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不在回收站中",
-//		})
-//		return
-//	}
-//
-//	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_deleted", false)
-//	if result.Error != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg":   "文档恢复失败",
-//			"error": result.Error.Error(),
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg": "文档恢复成功",
-//	})
-//}
-//
-//func PrototypeSave(ctx *gin.Context) {
-//	var request DocumentSaveRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//
-//	//jsonContent, err := json.Marshal(request.Content)
-//	//if err != nil {
-//	//	ctx.JSON(http.StatusBadRequest, gin.H{
-//	//		"error": err.Error(),
-//	//		"msg":   "JSON格式内容解析失败",
-//	//	})
-//	//	return
-//	//}
-//	document.Content = "{\"content\":\"" + string(request.Content) + "\"}"
-//	fmt.Println(document.Content)
-//	document.ModifierID = request.UserId
-//	document.ModifyTime = time.Now()
-//	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
-//	if result.Error != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档保存失败",
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg": "文档保存成功",
-//	})
-//}
-//
-//func PrototypeExit(ctx *gin.Context) {
-//	var request DocumentExitRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//	if document.IsDeleted {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档在回收站中",
-//		})
-//		return
-//	}
-//
-//	if time.Now().Sub(docEditTimeMap[request.DocID]) > time.Second*3 {
-//		docEditorMap[request.DocID] = []string{}
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不在编辑状态",
-//		})
-//		return
-//	}
-//
-//	editors := docEditorMap[request.DocID]
-//	var nowEditors []string
-//	for _, editor := range editors {
-//		if editor == request.UserId || time.Now().Sub(docUserTimeMap[editor]) > time.Second*3 {
-//			continue
-//		}
-//		nowEditors = append(nowEditors, editor)
-//	}
-//
-//	document.ModifierID = request.UserId
-//	document.ModifyTime = time.Now()
-//	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
-//	if result.Error != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档退出编辑失败",
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg":    "文档退出编辑成功",
-//		"remain": len(nowEditors),
-//	})
-//}
-//
-//func PrototypeGet(ctx *gin.Context) {
-//	docId, ok := ctx.GetQuery("docId")
-//	if !ok {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "docId不能为空",
-//		})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", docId)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//	if document.IsDeleted {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档在回收站中，无法编辑",
-//		})
-//		return
-//	}
-//
-//	var jsonContent gin.H
-//	if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "JSON格式内容解析失败",
-//		})
-//		return
-//	}
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg":     "文档获取成功",
-//		"content": jsonContent["content"],
-//	})
-//}
-//
-//func PrototypeApplyEdit(ctx *gin.Context) {
-//	var request DocumentApplyEditRequest
-//	if err := ctx.ShouldBindJSON(&request); err != nil {
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	var document entity.Document
-//	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-//	if document.DocID == 0 {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档不存在",
-//		})
-//		return
-//	}
-//	if document.IsDeleted {
-//		ctx.JSON(http.StatusBadRequest, gin.H{
-//			"msg": "文档已被删除",
-//		})
-//		return
-//	}
-//
-//	editors := docEditorMap[request.DocID]
-//	docUserTimeMap[request.UserId] = time.Now()
-//	var nowEditors []string
-//	for _, editor := range editors {
-//		if editor == request.UserId || time.Now().Sub(docUserTimeMap[editor]) > time.Second*3 {
-//			continue
-//		}
-//		nowEditors = append(nowEditors, editor)
-//	}
-//
-//	nowEditors = append(nowEditors, request.UserId)
-//	docEditorMap[request.DocID] = nowEditors
-//	docEditTimeMap[request.DocID] = time.Now()
-//	ctx.JSON(http.StatusOK, gin.H{
-//		"msg":          "申请编辑状态成功",
-//		"nowEditorNum": len(nowEditors),
-//	})
-//}
+
+func PrototypeCreate(ctx *gin.Context) {
+	var request PrototypeCreateRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "name = ?", request.Name)
+	if prototype.ProtoID != 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型已存在",
+		})
+		return
+	}
+
+	prototype = entity.Prototype{
+		Name:       request.Name,
+		ProjectID:  request.ProjectID,
+		CreatorID:  request.CreatorID,
+		CreateTime: time.Now(),
+		ModifierID: request.CreatorID,
+		ModifyTime: time.Now(),
+		IsEditing:  false,
+		IsDeleted:  false,
+		DeleterID:  request.CreatorID,
+		DeleteTime: time.Now(),
+		Content:    "{\"content\":\"[]\"}",
+	}
+	result := entity.Db.Create(&prototype)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型创建失败",
+			"err": result.Error.Error(),
+		})
+		return
+	}
+	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectID).First(&prototype)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":     "原型创建成功",
+		"protoId": prototype.ProtoID,
+	})
+}
+
+func PrototypeDelete(ctx *gin.Context) {
+	var request PrototypeDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
+	if prototype.ProtoID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+	if prototype.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型已删除",
+		})
+		return
+	}
+
+	prototype.IsDeleted = true
+	prototype.DeleterID = request.DeleterID
+	prototype.DeleteTime = time.Now()
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Updates(&prototype)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型删除失败",
+			"err": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "原型删除成功",
+	})
+}
+
+func PrototypeCompleteDelete(ctx *gin.Context) {
+	var request PrototypeCompleteDeleteRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
+	if prototype.ProtoID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+
+	result := entity.Db.Where("proto_id = ?", request.ProtoID).Delete(&prototype)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型删除失败",
+			"err": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "原型删除成功",
+	})
+}
+
+func PrototypeRename(ctx *gin.Context) {
+	var request ProtoRenameRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
+	if prototype.ProtoID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+
+	var prototypes []entity.Prototype
+	entity.Db.Where("name = ? AND project_id = ?", request.NewName, prototype.ProjectID).Find(&prototypes)
+	if len(prototypes) != 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型名称重复",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Update("name", request.NewName)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型重命名失败",
+			"err": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "原型重命名成功",
+	})
+}
+
+func PrototypeList(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "projectId不能为空",
+		})
+		return
+	}
+
+	var prototypes []entity.Prototype
+	var prototypeList []gin.H
+	entity.Db.Where("project_id = ?", projectId).Find(&prototypes)
+	sort.SliceStable(prototypes, func(i, j int) bool {
+		return prototypes[i].Name < prototypes[j].Name
+	})
+	for _, prototype := range prototypes {
+		if prototype.IsDeleted {
+			continue
+		}
+		var creator, modifier entity.User
+		entity.Db.Where("user_id = ?", prototype.CreatorID).First(&creator)
+		entity.Db.Where("user_id = ?", prototype.ModifierID).First(&modifier)
+		prototypeJson := gin.H{
+			"protoId":    prototype.ProtoID,
+			"protoName":  prototype.Name,
+			"creatorId":  prototype.CreatorID,
+			"createInfo": string(prototype.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+			"modifierId": prototype.ModifierID,
+			"modifyInfo": string(prototype.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
+		}
+		prototypeList = append(prototypeList, prototypeJson)
+	}
+	if len(prototypeList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg":       "当前项目没有原型",
+			"protoList": make([]entity.Prototype, 0),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":       "获取原型列表成功",
+		"protoList": prototypeList,
+	})
+}
+
+func PrototypeRecycle(ctx *gin.Context) {
+
+}
+
+func PrototypeRecover(ctx *gin.Context) {
+
+}
+
+func PrototypeSave(ctx *gin.Context) {
+	var request ProtoSaveRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
+	if prototype.ProtoID == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+
+	prototype.Content = "{\"content\":\"" + prototype.Content + "\"}"
+	prototype.ModifierID = request.UserId
+	prototype.ModifyTime = time.Now()
+}
+
+func PrototypeExit(ctx *gin.Context) {
+
+}
+
+func PrototypeGet(ctx *gin.Context) {
+
+}
+
+func PrototypeApplyEdit(ctx *gin.Context) {
+
+}

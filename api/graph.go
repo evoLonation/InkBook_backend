@@ -80,7 +80,7 @@ func GraphCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
-		Content:    "{\"content\": \"{}\"}",
+		Content:    "{\"content\": \"[]\"}",
 		EditingCnt: 0,
 	}
 	result := entity.Db.Create(&graph)

@@ -79,7 +79,7 @@ func DocumentCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
-		Content:    "{}",
+		Content:    "{\"content\": {}}",
 	}
 	result := entity.Db.Create(&document)
 	if result.Error != nil {

@@ -35,7 +35,7 @@ type DocumentRenameRequest struct {
 type DocumentSaveRequest struct {
 	DocID   int    `json:"docId"`
 	UserId  string `json:"userId"`
-	Content gin.H  `json:"content"`
+	Content string `json:"content"`
 }
 
 type DocumentExitRequest struct {
@@ -342,15 +342,15 @@ func DocumentSave(ctx *gin.Context) {
 		return
 	}
 
-	jsonContent, err := json.Marshal(request.Content)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-			"msg":   "JSON格式内容解析失败",
-		})
-		return
-	}
-	document.Content = "{\"content\":" + string(jsonContent) + "}"
+	//jsonContent, err := json.Marshal(request.Content)
+	//if err != nil {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{
+	//		"error": err.Error(),
+	//		"msg":   "JSON格式内容解析失败",
+	//	})
+	//	return
+	//}
+	document.Content = "{\"content\":" + string(request.Content) + "}"
 	document.ModifierID = request.UserId
 	document.ModifyTime = time.Now()
 	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)

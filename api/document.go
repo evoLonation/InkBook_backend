@@ -500,8 +500,8 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	docEditorMap[request.DocID] = nowEditors
 	docEditTimeMap[request.DocID] = time.Now()
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":    "申请编辑状态成功",
-		"remain": len(nowEditors),
+		"msg":          "申请编辑状态成功",
+		"nowEditorNum": len(nowEditors),
 	})
 }
 

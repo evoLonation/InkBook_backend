@@ -478,14 +478,6 @@ func DocumentApplyEdit(ctx *gin.Context) {
 		return
 	}
 
-	var jsonContent gin.H
-	if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "JSON格式内容解析失败",
-		})
-		return
-	}
-
 	editors := docEditorMap[request.DocID]
 	docUserTimeMap[request.UserId] = time.Now()
 	var nowEditors []string

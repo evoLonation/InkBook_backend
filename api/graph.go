@@ -44,6 +44,10 @@ type GraphExitRequest struct {
 	UserId  string `json:"userId"`
 }
 
+//var graphEditorMap = make(map[int][]string)
+//var graphEditTimeMap = make(map[int]time.Time)
+//var graphUserTimeMap = make(map[string]time.Time)
+
 func GraphCreate(ctx *gin.Context) {
 	var request GraphCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {

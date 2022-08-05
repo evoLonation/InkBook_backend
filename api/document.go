@@ -443,35 +443,6 @@ func DocumentGet(ctx *gin.Context) {
 		return
 	}
 
-	if document.IsEditing {
-		result := entity.Db.Model(&document).Where("doc_id = ?", docId).Update("editing_cnt", document.EditingCnt+1)
-		if result.Error != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"msg": "文档获取失败",
-			})
-			return
-		}
-		ctx.JSON(http.StatusConflict, gin.H{
-			"msg": "文档正在编辑",
-		})
-		return
-	}
-
-	result := entity.Db.Model(&document).Where("doc_id = ?", docId).Update("is_editing", true)
-	if result.Error != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "文档获取失败",
-		})
-		return
-	}
-	result = entity.Db.Model(&document).Where("doc_id = ?", docId).Update("editing_cnt", document.EditingCnt+1)
-	if result.Error != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "文档获取失败",
-		})
-		return
-	}
-
 	var jsonContent gin.H
 	if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -481,7 +452,7 @@ func DocumentGet(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":     "文档获取成功",
-		"content": jsonContent,
+		"content": jsonContent["content"],
 	})
 }
 
@@ -517,40 +488,21 @@ func DocumentApplyEdit(ctx *gin.Context) {
 
 	editors := docEditorMap[request.DocID]
 	docUserTimeMap[request.UserId] = time.Now()
-	if len(editors) == 0 {
-		docEditorMap[request.DocID] = append(editors, request.UserId)
-		docEditTimeMap[request.DocID] = time.Now()
-		ctx.JSON(http.StatusOK, gin.H{
-			"msg":     "文档获取成功",
-			"content": jsonContent["content"],
-		})
-		return
-	} else {
-		if time.Now().Sub(docEditTimeMap[request.DocID]) > time.Second*3 {
-			docEditorMap[request.DocID] = []string{request.UserId}
-			docEditTimeMap[request.DocID] = time.Now()
-			ctx.JSON(http.StatusOK, gin.H{
-				"msg":     "文档获取成功，正在编辑",
-				"content": jsonContent["content"],
-			})
-			return
-		} else {
-			docEditTimeMap[request.DocID] = time.Now()
-			for _, editor := range editors {
-				if editor == request.UserId {
-					ctx.JSON(http.StatusConflict, gin.H{
-						"msg": "文档获取成功，正在编辑",
-					})
-					return
-				}
-			}
-			docEditorMap[request.DocID] = append(editors, request.UserId)
-			ctx.JSON(http.StatusConflict, gin.H{
-				"msg": "文档获取成功，正在编辑",
-			})
-			return
+	var nowEditors []string
+	for _, editor := range editors {
+		if editor == request.UserId || time.Now().Sub(docUserTimeMap[editor]) > time.Second*3 {
+			continue
 		}
+		nowEditors = append(nowEditors, editor)
 	}
+
+	nowEditors = append(nowEditors, request.UserId)
+	docEditorMap[request.DocID] = nowEditors
+	docEditTimeMap[request.DocID] = time.Now()
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":    "申请编辑状态成功",
+		"remain": len(nowEditors),
+	})
 }
 
 func DocumentImg(c *gin.Context) {

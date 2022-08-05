@@ -80,7 +80,7 @@ func DocumentCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
-		Content:    "{\"content\": {}}",
+		Content:    "{\"content\": \"{}\"}",
 	}
 	result := entity.Db.Create(&document)
 	if result.Error != nil {
@@ -343,14 +343,6 @@ func DocumentSave(ctx *gin.Context) {
 		return
 	}
 
-	//jsonContent, err := json.Marshal(request.Content)
-	//if err != nil {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{
-	//		"error": err.Error(),
-	//		"msg":   "JSON格式内容解析失败",
-	//	})
-	//	return
-	//}
 	document.Content = "{\"content\":\"" + string(request.Content) + "\"}"
 	fmt.Println(document.Content)
 	document.ModifierID = request.UserId

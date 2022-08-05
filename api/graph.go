@@ -80,7 +80,7 @@ func GraphCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
-		Content:    "{}",
+		Content:    "{\"content\": \"{}\"}",
 		EditingCnt: 0,
 	}
 	result := entity.Db.Create(&graph)
@@ -343,15 +343,7 @@ func GraphSave(ctx *gin.Context) {
 		return
 	}
 
-	//jsonContent, err := json.Marshal(request.Content)
-	//if err != nil {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{
-	//		"error": err.Error(),
-	//		"msg":   "JSON格式内容解析失败",
-	//	})
-	//	return
-	//}
-	graph.Content = "{\"content\": " + request.Content + "}"
+	graph.Content = "{\"content\":\"" + request.Content + "\"}"
 	graph.ModifierID = request.UserId
 	graph.ModifyTime = time.Now()
 	result := entity.Db.Where("graph_id = ?", request.GraphID).Updates(&graph)

@@ -96,6 +96,22 @@ func Start(address string) {
 		graphGroup.POST("/apply-edit", GraphApplyEdit)
 	}
 
+	//prototype
+	//prototypeGroup := router.Group("/api/prototype")
+	//{
+	//	prototypeGroup.POST("/create", PrototypeCreate)
+	//	prototypeGroup.POST("/delete", PrototypeDelete)
+	//	prototypeGroup.POST("/complete-delete", PrototypeCompleteDelete)
+	//	prototypeGroup.POST("/rename", PrototypeRename)
+	//	prototypeGroup.GET("/list", PrototypeList)
+	//	prototypeGroup.GET("/recycle", PrototypeRecycle)
+	//	prototypeGroup.POST("/recover", PrototypeRecover)
+	//	prototypeGroup.POST("/save", PrototypeSave)
+	//	prototypeGroup.POST("/exit", PrototypeExit)
+	//	prototypeGroup.GET("/get", PrototypeGet)
+	//	prototypeGroup.POST("/apply-edit", PrototypeApplyEdit)
+	//}
+
 	err := router.Run(address)
 	if err != nil {
 		return

@@ -245,17 +245,21 @@ func ProjectListTeam(ctx *gin.Context) {
 	var projectList []gin.H
 	entity.Db.Where("team_id = ?", teamId).Find(&projects)
 	sort.SliceStable(projects, func(i, j int) bool {
-		return projects[i].Name < projects[j].Name
+		return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
 	})
 	for _, project := range projects {
 		if project.IsDeleted {
 			continue
 		}
+		var creator entity.User
+		entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
 		projectJson := gin.H{
-			"id":     project.ProjectID,
-			"name":   project.Name,
-			"detail": project.Intro,
-			"imgUrl": project.ImgURL,
+			"id":         project.ProjectID,
+			"name":       project.Name,
+			"detail":     project.Intro,
+			"imgUrl":     project.ImgURL,
+			"creatorId":  project.CreatorID,
+			"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 		}
 		projectList = append(projectList, projectJson)
 	}
@@ -290,18 +294,22 @@ func ProjectListUser(ctx *gin.Context) {
 		var projects []entity.Project
 		entity.Db.Where("team_id = ?", team.TeamId).Find(&projects)
 		sort.SliceStable(projects, func(i, j int) bool {
-			return projects[i].Name < projects[j].Name
+			return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
 		})
 		for _, project := range projects {
 			if project.IsDeleted {
 				continue
 			}
+			var creator entity.User
+			entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
 			projectJson := gin.H{
-				"id":     project.ProjectID,
-				"teamId": team.TeamId,
-				"name":   project.Name,
-				"detail": project.Intro,
-				"imgUrl": project.ImgURL,
+				"id":         project.ProjectID,
+				"teamId":     team.TeamId,
+				"name":       project.Name,
+				"detail":     project.Intro,
+				"imgUrl":     project.ImgURL,
+				"creatorId":  project.CreatorID,
+				"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 			}
 			projectList = append(projectList, projectJson)
 		}
@@ -331,17 +339,21 @@ func ProjectRecycle(ctx *gin.Context) {
 	var projectList []gin.H
 	entity.Db.Where("team_id = ?", teamId).Find(&projects)
 	sort.SliceStable(projects, func(i, j int) bool {
-		return projects[i].Name < projects[j].Name
+		return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
 	})
 	for _, project := range projects {
 		if !project.IsDeleted {
 			continue
 		}
+		var creator entity.User
+		entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
 		projectJson := gin.H{
-			"id":     project.ProjectID,
-			"name":   project.Name,
-			"detail": project.Intro,
-			"imgUrl": project.ImgURL,
+			"id":         project.ProjectID,
+			"name":       project.Name,
+			"detail":     project.Intro,
+			"imgUrl":     project.ImgURL,
+			"creatorId":  project.CreatorID,
+			"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 		}
 		projectList = append(projectList, projectJson)
 	}
@@ -396,18 +408,24 @@ func ProjectSearch(ctx *gin.Context) {
 	}
 
 	var projects []entity.Project
+	var projectList []gin.H
 	entity.Db.Where("name LIKE ? AND team_id = ?", keyword, teamId).Find(&projects)
 	sort.SliceStable(projects, func(i, j int) bool {
-		return projects[i].Name < projects[j].Name
+		return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
 	})
-
-	var projectList []gin.H
 	for _, project := range projects {
+		if project.IsDeleted {
+			continue
+		}
+		var creator entity.User
+		entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
 		projectJson := gin.H{
-			"id":     project.ProjectID,
-			"name":   project.Name,
-			"detail": project.Intro,
-			"imgUrl": project.ImgURL,
+			"id":         project.ProjectID,
+			"name":       project.Name,
+			"detail":     project.Intro,
+			"imgUrl":     project.ImgURL,
+			"creatorId":  project.CreatorID,
+			"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 		}
 		projectList = append(projectList, projectJson)
 	}

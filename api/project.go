@@ -206,6 +206,38 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 		})
 		return
 	}
+
+	var folder entity.Folder
+	entity.Db.Where("name = ? AND team_id = ?", project.Name, project.TeamId).First(&folder)
+	if folder == (entity.Folder{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "项目文件夹不存在",
+		})
+		return
+	}
+
+	var documents []entity.Document
+	entity.Db.Where("parent_id = ?", folder.FolderId).Find(&documents)
+	for _, document := range documents {
+		result = entity.Db.Where("document_id = ?", document.DocId).Delete(&document)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目文件删除失败",
+			})
+			return
+		}
+	}
+
+	result = entity.Db.Where("folder_id = ?", folder.FolderId).Delete(&folder)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目文件夹删除失败",
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目删除成功",
 	})

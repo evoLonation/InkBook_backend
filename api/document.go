@@ -213,7 +213,7 @@ func DocumentList(ctx *gin.Context) {
 	var docList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&documents)
 	sort.SliceStable(documents, func(i, j int) bool {
-		return documents[i].Name < documents[j].Name
+		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
 	})
 	for _, document := range documents {
 		if document.IsDeleted {
@@ -258,7 +258,7 @@ func DocumentRecycle(ctx *gin.Context) {
 	var docList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&documents)
 	sort.SliceStable(documents, func(i, j int) bool {
-		return documents[i].Name < documents[j].Name
+		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
 	})
 	for _, document := range documents {
 		if !document.IsDeleted {

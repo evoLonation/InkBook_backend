@@ -76,6 +76,7 @@ func PrototypeCreate(ctx *gin.Context) {
 		DeleterID:  request.CreatorID,
 		DeleteTime: time.Now(),
 		Content:    "",
+		EditingCnt: 0,
 	}
 	result := entity.Db.Create(&prototype)
 	if result.Error != nil {
@@ -210,7 +211,7 @@ func PrototypeList(ctx *gin.Context) {
 	var prototypeList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&prototypes)
 	sort.SliceStable(prototypes, func(i, j int) bool {
-		return prototypes[i].Name < prototypes[j].Name
+		return prototypes[i].CreateTime.Unix() > prototypes[j].CreateTime.Unix()
 	})
 	for _, prototype := range prototypes {
 		if prototype.IsDeleted {
@@ -255,7 +256,7 @@ func PrototypeRecycle(ctx *gin.Context) {
 	var prototypeList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&prototypes)
 	sort.SliceStable(prototypes, func(i, j int) bool {
-		return prototypes[i].Name < prototypes[j].Name
+		return prototypes[i].CreateTime.Unix() > prototypes[j].CreateTime.Unix()
 	})
 	for _, prototype := range prototypes {
 		if !prototype.IsDeleted {
@@ -344,8 +345,8 @@ func PrototypeSave(ctx *gin.Context) {
 	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Updates(&prototype)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "原型保存失败",
-			"err": result.Error.Error(),
+			"msg":   "原型保存失败",
+			"error": result.Error.Error(),
 		})
 		return
 	}
@@ -398,8 +399,8 @@ func PrototypeExit(ctx *gin.Context) {
 	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Updates(&prototype)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "原型退出编辑失败",
-			"err": result.Error.Error(),
+			"msg":   "原型退出编辑失败",
+			"error": result.Error.Error(),
 		})
 		return
 	}

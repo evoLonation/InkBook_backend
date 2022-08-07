@@ -28,10 +28,6 @@ type GraphRenameRequest struct {
 	NewName string `json:"newName"`
 }
 
-type GraphListRequest struct {
-	ProjectID int `json:"projectId"`
-}
-
 type GraphSaveRequest struct {
 	GraphID int    `json:"graphId"`
 	UserId  string `json:"userId"`
@@ -215,21 +211,22 @@ func GraphList(ctx *gin.Context) {
 	var graphList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&graphs)
 	sort.SliceStable(graphs, func(i, j int) bool {
-		return graphs[i].Name < graphs[j].Name
+		return graphs[i].CreateTime.Unix() > graphs[j].CreateTime.Unix()
 	})
 	for _, graph := range graphs {
 		if graph.IsDeleted {
 			continue
 		}
-		var creator entity.User
+		var creator, modifier entity.User
 		entity.Db.Where("user_id = ?", graph.CreatorID).Find(&creator)
+		entity.Db.Where("user_id = ?", graph.ModifierID).Find(&modifier)
 		graphJson := gin.H{
 			"graphId":    graph.GraphID,
 			"name":       graph.Name,
 			"creatorId":  graph.CreatorID,
 			"CreateInfo": string(graph.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 			"ModifierID": graph.ModifierID,
-			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
+			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04:05")) + " by " + modifier.Nickname,
 		}
 		graphList = append(graphList, graphJson)
 	}
@@ -259,7 +256,7 @@ func GraphRecycle(ctx *gin.Context) {
 	var graphList []gin.H
 	entity.Db.Where("project_id = ?", projectId).Find(&graphs)
 	sort.SliceStable(graphs, func(i, j int) bool {
-		return graphs[i].Name < graphs[j].Name
+		return graphs[i].CreateTime.Unix() > graphs[j].CreateTime.Unix()
 	})
 	for _, graph := range graphs {
 		if !graph.IsDeleted {
@@ -348,7 +345,8 @@ func GraphSave(ctx *gin.Context) {
 	result := entity.Db.Where("graph_id = ?", request.GraphID).Updates(&graph)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "UML图保存失败",
+			"msg":   "UML图保存失败",
+			"error": result.Error.Error(),
 		})
 		return
 	}
@@ -384,6 +382,7 @@ func GraphExit(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "UML图不在编辑状态",
 		})
+		return
 	}
 
 	editors := graphEditorMap[request.GraphID]
@@ -400,7 +399,8 @@ func GraphExit(ctx *gin.Context) {
 	result := entity.Db.Model(&graph).Where("graph_id = ?", request.GraphID).Updates(&graph)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "UML图退出编辑失败",
+			"msg":   "UML图退出编辑失败",
+			"error": result.Error.Error(),
 		})
 		return
 	}

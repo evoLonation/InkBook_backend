@@ -259,6 +259,15 @@ func ProjectRename(ctx *gin.Context) {
 		return
 	}
 
+	var folder entity.Folder
+	entity.Db.Where("name = ? AND team_id = ?", project.Name, project.TeamId).First(&folder)
+	if folder == (entity.Folder{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不存在",
+		})
+		return
+	}
+
 	var projects []entity.Project
 	entity.Db.Where("name = ? AND team_id = ?", request.NewName, project.TeamId).Find(&projects)
 	if len(projects) != 0 {
@@ -276,6 +285,16 @@ func ProjectRename(ctx *gin.Context) {
 		})
 		return
 	}
+
+	result = entity.Db.Model(&folder).Where("folder_id = ?", folder.FolderId).Update("name", request.NewName)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "项目文件夹重命名失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目重命名成功",
 	})

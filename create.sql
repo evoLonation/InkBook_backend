@@ -50,7 +50,7 @@ create table folders
     folder_id   int primary key auto_increment not null,
     name        varchar(20) not null,
     team_id     int         not null,
-    parent_id   varchar(20) not null,
+    parent_id   int         not null default 0,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
     is_deleted  bool        not null default false,
@@ -65,7 +65,7 @@ create table documents
 (
     doc_id      int primary key auto_increment not null,
     name        varchar(20) not null,
-    parent_id   varchar(20) not null,
+    parent_id   int         not null default 0,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
     modifier_id varchar(20),

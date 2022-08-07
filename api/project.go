@@ -10,28 +10,28 @@ import (
 
 type ProjectCreateRequest struct {
 	Name   string `json:"name"`
-	TeamID int    `json:"teamId"`
+	TeamId int    `json:"teamId"`
 	UserId string `json:"userId"`
 	Detail string `json:"detail"`
 	ImgURL string `json:"imgUrl"`
 }
 
 type ProjectDeleteRequest struct {
-	ProjectID int `json:"projectId"`
+	ProjectId int `json:"projectId"`
 }
 
 type ProjectRenameRequest struct {
-	ProjectID int    `json:"projectId"`
+	ProjectId int    `json:"projectId"`
 	NewName   string `json:"newName"`
 }
 
 type ProjectModifyIntroRequest struct {
-	ProjectID int    `json:"projectId"`
+	ProjectId int    `json:"projectId"`
 	NewIntro  string `json:"newIntro"`
 }
 
 type ProjectModifyImgRequest struct {
-	ProjectID int    `json:"projectId"`
+	ProjectId int    `json:"projectId"`
 	NewImgURL string `json:"newImgUrl"`
 }
 
@@ -53,8 +53,8 @@ func ProjectCreate(ctx *gin.Context) {
 
 	project = entity.Project{
 		Name:       request.Name,
-		TeamID:     request.TeamID,
-		CreatorID:  request.UserId,
+		TeamId:     request.TeamId,
+		CreatorId:  request.UserId,
 		CreateTime: time.Now(),
 		IsDeleted:  false,
 		DeleteTime: time.Now(),
@@ -64,19 +64,39 @@ func ProjectCreate(ctx *gin.Context) {
 	if project.Intro == "" {
 		project.Intro = "暂无项目简介"
 	}
-
 	result := entity.Db.Create(&project)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
 			"msg":   "项目创建失败",
+			"error": result.Error.Error(),
 		})
 		return
 	}
-	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamID).First(&project)
+
+	folder := entity.Folder{
+		Name:       request.Name,
+		TeamId:     request.TeamId,
+		CreatorId:  request.UserId,
+		CreateTime: time.Now(),
+		IsDeleted:  false,
+		DeleterId:  request.UserId,
+		DeleteTime: time.Now(),
+	}
+	result = entity.Db.Create(&folder)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "项目文件夹创建失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamId).First(&project)
+	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamId).First(&folder)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":       "项目创建成功",
-		"projectId": project.ProjectID,
+		"projectId": project.ProjectId,
+		"folderId":  folder.FolderId,
 	})
 }
 
@@ -88,7 +108,7 @@ func ProjectDelete(ctx *gin.Context) {
 	}
 
 	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
@@ -104,7 +124,7 @@ func ProjectDelete(ctx *gin.Context) {
 
 	project.IsDeleted = true
 	project.DeleteTime = time.Now()
-	result := entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Updates(&project)
+	result := entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Updates(&project)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": result.Error.Error(),
@@ -125,7 +145,7 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 	}
 
 	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
@@ -133,7 +153,7 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 		return
 	}
 
-	result := entity.Db.Where("project_id = ?", request.ProjectID).Delete(&project)
+	result := entity.Db.Where("project_id = ?", request.ProjectId).Delete(&project)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": result.Error.Error(),
@@ -154,7 +174,7 @@ func ProjectRename(ctx *gin.Context) {
 	}
 
 	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
@@ -163,7 +183,7 @@ func ProjectRename(ctx *gin.Context) {
 	}
 
 	var projects []entity.Project
-	entity.Db.Where("name = ? AND team_id = ?", request.NewName, project.TeamID).Find(&projects)
+	entity.Db.Where("name = ? AND team_id = ?", request.NewName, project.TeamId).Find(&projects)
 	if len(projects) != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目名称重复",
@@ -171,7 +191,7 @@ func ProjectRename(ctx *gin.Context) {
 		return
 	}
 
-	result := entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("name", request.NewName)
+	result := entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Update("name", request.NewName)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": result.Error.Error(),
@@ -192,7 +212,7 @@ func ProjectModifyIntro(ctx *gin.Context) {
 	}
 
 	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
@@ -203,7 +223,7 @@ func ProjectModifyIntro(ctx *gin.Context) {
 	if request.NewIntro == "" {
 		request.NewIntro = "暂无项目简介"
 	}
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("intro", request.NewIntro)
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Update("intro", request.NewIntro)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目简介修改成功",
 	})
@@ -217,7 +237,7 @@ func ProjectModifyImg(ctx *gin.Context) {
 	}
 
 	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
@@ -226,7 +246,7 @@ func ProjectModifyImg(ctx *gin.Context) {
 	}
 
 	project.ImgURL = request.NewImgURL
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("img_url", request.NewImgURL)
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Update("img_url", request.NewImgURL)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目图片修改成功",
 	})
@@ -252,13 +272,13 @@ func ProjectListTeam(ctx *gin.Context) {
 			continue
 		}
 		var creator entity.User
-		entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
+		entity.Db.Find(&creator, "user_id = ?", project.CreatorId)
 		projectJson := gin.H{
-			"id":         project.ProjectID,
+			"id":         project.ProjectId,
 			"name":       project.Name,
 			"detail":     project.Intro,
 			"imgUrl":     project.ImgURL,
-			"creatorId":  project.CreatorID,
+			"creatorId":  project.CreatorId,
 			"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 		}
 		projectList = append(projectList, projectJson)
@@ -301,14 +321,14 @@ func ProjectListUser(ctx *gin.Context) {
 				continue
 			}
 			var creator entity.User
-			entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
+			entity.Db.Find(&creator, "user_id = ?", project.CreatorId)
 			projectJson := gin.H{
-				"id":         project.ProjectID,
+				"id":         project.ProjectId,
 				"teamId":     team.TeamId,
 				"name":       project.Name,
 				"detail":     project.Intro,
 				"imgUrl":     project.ImgURL,
-				"creatorId":  project.CreatorID,
+				"creatorId":  project.CreatorId,
 				"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 			}
 			projectList = append(projectList, projectJson)
@@ -346,13 +366,13 @@ func ProjectRecycle(ctx *gin.Context) {
 			continue
 		}
 		var creator entity.User
-		entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
+		entity.Db.Find(&creator, "user_id = ?", project.CreatorId)
 		projectJson := gin.H{
-			"id":         project.ProjectID,
+			"id":         project.ProjectId,
 			"name":       project.Name,
 			"detail":     project.Intro,
 			"imgUrl":     project.ImgURL,
-			"creatorId":  project.CreatorID,
+			"creatorId":  project.CreatorId,
 			"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 		}
 		projectList = append(projectList, projectJson)
@@ -377,7 +397,7 @@ func ProjectRecover(ctx *gin.Context) {
 	}
 
 	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectID)
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
@@ -391,7 +411,7 @@ func ProjectRecover(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectID).Update("is_deleted", false)
+	entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Update("is_deleted", false)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目恢复成功",
 	})
@@ -418,13 +438,13 @@ func ProjectSearch(ctx *gin.Context) {
 			continue
 		}
 		var creator entity.User
-		entity.Db.Find(&creator, "user_id = ?", project.CreatorID)
+		entity.Db.Find(&creator, "user_id = ?", project.CreatorId)
 		projectJson := gin.H{
-			"id":         project.ProjectID,
+			"id":         project.ProjectId,
 			"name":       project.Name,
 			"detail":     project.Intro,
 			"imgUrl":     project.ImgURL,
-			"creatorId":  project.CreatorID,
+			"creatorId":  project.CreatorId,
 			"createInfo": string(project.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
 		}
 		projectList = append(projectList, projectJson)

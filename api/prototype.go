@@ -10,37 +10,37 @@ import (
 
 type PrototypeCreateRequest struct {
 	Name      string `json:"name"`
-	CreatorID string `json:"creatorId"`
-	ProjectID int    `json:"projectId"`
+	CreatorId string `json:"creatorId"`
+	ProjectId int    `json:"projectId"`
 }
 
 type PrototypeDeleteRequest struct {
-	ProtoID   int    `json:"protoId"`
-	DeleterID string `json:"deleterId"`
+	ProtoId   int    `json:"protoId"`
+	DeleterId string `json:"deleterId"`
 }
 
 type PrototypeCompleteDeleteRequest struct {
-	ProtoID int `json:"protoId"`
+	ProtoId int `json:"protoId"`
 }
 
 type ProtoRenameRequest struct {
-	ProtoID int    `json:"protoId"`
+	ProtoId int    `json:"protoId"`
 	NewName string `json:"newName"`
 }
 
 type ProtoSaveRequest struct {
-	ProtoID int    `json:"protoId"`
+	ProtoId int    `json:"protoId"`
 	UserId  string `json:"userId"`
 	Content string `json:"content"`
 }
 
 type ProtoExitRequest struct {
-	ProtoID int    `json:"protoId"`
+	ProtoId int    `json:"protoId"`
 	UserId  string `json:"userId"`
 }
 
 type ProtoApplyEditRequest struct {
-	ProtoID int    `json:"protoId"`
+	ProtoId int    `json:"protoId"`
 	UserId  string `json:"userId"`
 }
 
@@ -57,7 +57,7 @@ func PrototypeCreate(ctx *gin.Context) {
 
 	var prototype entity.Prototype
 	entity.Db.Find(&prototype, "name = ?", request.Name)
-	if prototype.ProtoID != 0 {
+	if prototype.ProtoId != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型已存在",
 		})
@@ -66,14 +66,14 @@ func PrototypeCreate(ctx *gin.Context) {
 
 	prototype = entity.Prototype{
 		Name:       request.Name,
-		ProjectID:  request.ProjectID,
-		CreatorID:  request.CreatorID,
+		ProjectId:  request.ProjectId,
+		CreatorId:  request.CreatorId,
 		CreateTime: time.Now(),
-		ModifierID: request.CreatorID,
+		ModifierId: request.CreatorId,
 		ModifyTime: time.Now(),
 		IsEditing:  false,
 		IsDeleted:  false,
-		DeleterID:  request.CreatorID,
+		DeleterId:  request.CreatorId,
 		DeleteTime: time.Now(),
 		Content:    "",
 		EditingCnt: 0,
@@ -86,10 +86,10 @@ func PrototypeCreate(ctx *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectID).First(&prototype)
+	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectId).First(&prototype)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":     "原型创建成功",
-		"protoId": prototype.ProtoID,
+		"protoId": prototype.ProtoId,
 	})
 }
 
@@ -101,8 +101,8 @@ func PrototypeDelete(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
-	if prototype.ProtoID == 0 {
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
@@ -116,9 +116,9 @@ func PrototypeDelete(ctx *gin.Context) {
 	}
 
 	prototype.IsDeleted = true
-	prototype.DeleterID = request.DeleterID
+	prototype.DeleterId = request.DeleterId
 	prototype.DeleteTime = time.Now()
-	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Updates(&prototype)
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoId).Updates(&prototype)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型删除失败",
@@ -139,15 +139,15 @@ func PrototypeCompleteDelete(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
-	if prototype.ProtoID == 0 {
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
 		return
 	}
 
-	result := entity.Db.Where("proto_id = ?", request.ProtoID).Delete(&prototype)
+	result := entity.Db.Where("proto_id = ?", request.ProtoId).Delete(&prototype)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型删除失败",
@@ -168,8 +168,8 @@ func PrototypeRename(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
-	if prototype.ProtoID == 0 {
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
@@ -177,7 +177,7 @@ func PrototypeRename(ctx *gin.Context) {
 	}
 
 	var prototypes []entity.Prototype
-	entity.Db.Where("name = ? AND project_id = ?", request.NewName, prototype.ProjectID).Find(&prototypes)
+	entity.Db.Where("name = ? AND project_id = ?", request.NewName, prototype.ProjectId).Find(&prototypes)
 	if len(prototypes) != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型名称重复",
@@ -185,7 +185,7 @@ func PrototypeRename(ctx *gin.Context) {
 		return
 	}
 
-	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Update("name", request.NewName)
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoId).Update("name", request.NewName)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型重命名失败",
@@ -218,14 +218,14 @@ func PrototypeList(ctx *gin.Context) {
 			continue
 		}
 		var creator, modifier entity.User
-		entity.Db.Where("user_id = ?", prototype.CreatorID).First(&creator)
-		entity.Db.Where("user_id = ?", prototype.ModifierID).First(&modifier)
+		entity.Db.Where("user_id = ?", prototype.CreatorId).First(&creator)
+		entity.Db.Where("user_id = ?", prototype.ModifierId).First(&modifier)
 		prototypeJson := gin.H{
-			"protoId":    prototype.ProtoID,
+			"protoId":    prototype.ProtoId,
 			"protoName":  prototype.Name,
-			"creatorId":  prototype.CreatorID,
+			"creatorId":  prototype.CreatorId,
 			"createInfo": string(prototype.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
-			"modifierId": prototype.ModifierID,
+			"modifierId": prototype.ModifierId,
 			"modifyInfo": string(prototype.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		prototypeList = append(prototypeList, prototypeJson)
@@ -263,14 +263,14 @@ func PrototypeRecycle(ctx *gin.Context) {
 			continue
 		}
 		var creator, modifier entity.User
-		entity.Db.Where("user_id = ?", prototype.CreatorID).First(&creator)
-		entity.Db.Where("user_id = ?", prototype.ModifierID).First(&modifier)
+		entity.Db.Where("user_id = ?", prototype.CreatorId).First(&creator)
+		entity.Db.Where("user_id = ?", prototype.ModifierId).First(&modifier)
 		prototypeJson := gin.H{
-			"protoId":    prototype.ProtoID,
+			"protoId":    prototype.ProtoId,
 			"protoName":  prototype.Name,
-			"creatorId":  prototype.CreatorID,
+			"creatorId":  prototype.CreatorId,
 			"createInfo": string(prototype.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
-			"modifierId": prototype.ModifierID,
+			"modifierId": prototype.ModifierId,
 			"modifyInfo": string(prototype.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		prototypeList = append(prototypeList, prototypeJson)
@@ -296,8 +296,8 @@ func PrototypeRecover(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
-	if prototype.ProtoID == 0 {
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
@@ -310,7 +310,7 @@ func PrototypeRecover(ctx *gin.Context) {
 		return
 	}
 
-	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Update("is_deleted", false)
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoId).Update("is_deleted", false)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型恢复失败",
@@ -331,8 +331,8 @@ func PrototypeSave(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
-	if prototype.ProtoID == 0 {
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
@@ -340,9 +340,9 @@ func PrototypeSave(ctx *gin.Context) {
 	}
 
 	prototype.Content = request.Content
-	prototype.ModifierID = request.UserId
+	prototype.ModifierId = request.UserId
 	prototype.ModifyTime = time.Now()
-	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Updates(&prototype)
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoId).Updates(&prototype)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "原型保存失败",
@@ -363,8 +363,8 @@ func PrototypeExit(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
-	if prototype.ProtoID == 0 {
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
@@ -377,15 +377,15 @@ func PrototypeExit(ctx *gin.Context) {
 		return
 	}
 
-	if time.Now().Sub(protoEditTimeMap[request.ProtoID]) > time.Second*3 {
-		protoEditorMap[request.ProtoID] = []string{}
+	if time.Now().Sub(protoEditTimeMap[request.ProtoId]) > time.Second*3 {
+		protoEditorMap[request.ProtoId] = []string{}
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不在编辑状态",
 		})
 		return
 	}
 
-	editors := protoEditorMap[request.ProtoID]
+	editors := protoEditorMap[request.ProtoId]
 	var nowEditors []string
 	for _, editor := range editors {
 		if editor == request.UserId || time.Now().Sub(protoUserTimeMap[editor]) > time.Second*3 {
@@ -394,9 +394,9 @@ func PrototypeExit(ctx *gin.Context) {
 		nowEditors = append(nowEditors, editor)
 	}
 
-	prototype.ModifierID = request.UserId
+	prototype.ModifierId = request.UserId
 	prototype.ModifyTime = time.Now()
-	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoID).Updates(&prototype)
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoId).Updates(&prototype)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "原型退出编辑失败",
@@ -421,7 +421,7 @@ func PrototypeGet(ctx *gin.Context) {
 
 	var prototype entity.Prototype
 	entity.Db.Find(&prototype, "proto_id = ?", protoId)
-	if prototype.ProtoID == 0 {
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
@@ -448,8 +448,8 @@ func PrototypeApplyEdit(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoID)
-	if prototype.ProtoID == 0 {
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型不存在",
 		})
@@ -462,7 +462,7 @@ func PrototypeApplyEdit(ctx *gin.Context) {
 		return
 	}
 
-	editors := protoEditorMap[request.ProtoID]
+	editors := protoEditorMap[request.ProtoId]
 	protoUserTimeMap[request.UserId] = time.Now()
 	var nowEditors []string
 	for _, editor := range editors {
@@ -473,8 +473,8 @@ func PrototypeApplyEdit(ctx *gin.Context) {
 	}
 
 	nowEditors = append(nowEditors, request.UserId)
-	protoEditorMap[request.ProtoID] = nowEditors
-	protoEditTimeMap[request.ProtoID] = time.Now()
+	protoEditorMap[request.ProtoId] = nowEditors
+	protoEditTimeMap[request.ProtoId] = time.Now()
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":          "原型申请编辑成功",
 		"nowEditorNum": len(nowEditors),

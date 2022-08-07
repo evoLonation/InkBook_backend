@@ -64,6 +64,12 @@ func Start(address string) {
 		projectGroup.GET("/search", ProjectSearch)
 	}
 
+	//folder
+	folderGroup := router.Group("/api/folder")
+	{
+		folderGroup.POST("/create", FolderCreate)
+	}
+
 	//document
 	documentGroup := router.Group("/api/document")
 	{

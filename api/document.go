@@ -13,37 +13,37 @@ import (
 
 type DocumentCreateRequest struct {
 	Name      string `json:"name"`
-	CreatorID string `json:"creatorId"`
-	ProjectID int    `json:"projectId"`
+	CreatorId string `json:"creatorId"`
+	ProjectId int    `json:"projectId"`
 }
 
 type DocumentDeleteRequest struct {
-	DocID     int    `json:"docId"`
-	DeleterID string `json:"deleterId"`
+	DocId     int    `json:"docId"`
+	DeleterId string `json:"deleterId"`
 }
 
 type DocumentCompleteDeleteRequest struct {
-	DocID int `json:"docId"`
+	DocId int `json:"docId"`
 }
 
 type DocumentRenameRequest struct {
-	DocID   int    `json:"docId"`
+	DocId   int    `json:"docId"`
 	NewName string `json:"newName"`
 }
 
 type DocumentSaveRequest struct {
-	DocID   int    `json:"docId"`
+	DocId   int    `json:"docId"`
 	UserId  string `json:"userId"`
 	Content string `json:"content"`
 }
 
 type DocumentExitRequest struct {
-	DocID  int    `json:"docId"`
+	DocId  int    `json:"docId"`
 	UserId string `json:"userId"`
 }
 
 type DocumentApplyEditRequest struct {
-	DocID  int    `json:"docId"`
+	DocId  int    `json:"docId"`
 	UserId string `json:"userId"`
 }
 
@@ -60,7 +60,7 @@ func DocumentCreate(ctx *gin.Context) {
 
 	var document entity.Document
 	entity.Db.Find(&document, "name = ?", request.Name)
-	if document.DocID != 0 {
+	if document.DocId != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档已存在",
 		})
@@ -69,14 +69,14 @@ func DocumentCreate(ctx *gin.Context) {
 
 	document = entity.Document{
 		Name:       request.Name,
-		ProjectID:  request.ProjectID,
-		CreatorID:  request.CreatorID,
+		ProjectId:  request.ProjectId,
+		CreatorId:  request.CreatorId,
 		CreateTime: time.Now(),
-		ModifierID: request.CreatorID,
+		ModifierId: request.CreatorId,
 		ModifyTime: time.Now(),
 		IsEditing:  false,
 		IsDeleted:  false,
-		DeleterID:  request.CreatorID,
+		DeleterId:  request.CreatorId,
 		DeleteTime: time.Now(),
 		Content:    "",
 	}
@@ -88,10 +88,10 @@ func DocumentCreate(ctx *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectID).First(&document)
+	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectId).First(&document)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":   "文档创建成功",
-		"docId": document.DocID,
+		"docId": document.DocId,
 	})
 }
 
@@ -103,8 +103,8 @@ func DocumentDelete(ctx *gin.Context) {
 	}
 
 	var document entity.Document
-	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document.DocID == 0 {
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
@@ -118,9 +118,9 @@ func DocumentDelete(ctx *gin.Context) {
 	}
 
 	document.IsDeleted = true
-	document.DeleterID = request.DeleterID
+	document.DeleterId = request.DeleterId
 	document.DeleteTime = time.Now()
-	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocId).Updates(&document)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "文档删除失败",
@@ -141,15 +141,15 @@ func DocumentCompleteDelete(ctx *gin.Context) {
 	}
 
 	var document entity.Document
-	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document.DocID == 0 {
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
 		return
 	}
 
-	result := entity.Db.Where("doc_id = ?", request.DocID).Delete(&document)
+	result := entity.Db.Where("doc_id = ?", request.DocId).Delete(&document)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "文档删除失败",
@@ -170,8 +170,8 @@ func DocumentRename(ctx *gin.Context) {
 	}
 
 	var document entity.Document
-	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document.DocID == 0 {
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
@@ -179,7 +179,7 @@ func DocumentRename(ctx *gin.Context) {
 	}
 
 	var documents []entity.Document
-	entity.Db.Where("name = ? and project_id = ?", request.NewName, document.ProjectID).Find(&documents)
+	entity.Db.Where("name = ? and project_id = ?", request.NewName, document.ProjectId).Find(&documents)
 	if len(documents) != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档名称重复",
@@ -187,7 +187,7 @@ func DocumentRename(ctx *gin.Context) {
 		return
 	}
 
-	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("name", request.NewName)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocId).Update("name", request.NewName)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "文档重命名失败",
@@ -220,14 +220,14 @@ func DocumentList(ctx *gin.Context) {
 			continue
 		}
 		var creator, modifier entity.User
-		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
-		entity.Db.Where("user_id = ?", document.ModifierID).Find(&modifier)
+		entity.Db.Where("user_id = ?", document.CreatorId).Find(&creator)
+		entity.Db.Where("user_id = ?", document.ModifierId).Find(&modifier)
 		documentJson := gin.H{
-			"docId":      document.DocID,
+			"docId":      document.DocId,
 			"docName":    document.Name,
-			"creatorId":  document.CreatorID,
+			"creatorId":  document.CreatorId,
 			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
-			"modifierId": document.ModifierID,
+			"modifierId": document.ModifierId,
 			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		docList = append(docList, documentJson)
@@ -265,14 +265,14 @@ func DocumentRecycle(ctx *gin.Context) {
 			continue
 		}
 		var creator, modifier entity.User
-		entity.Db.Where("user_id = ?", document.CreatorID).Find(&creator)
-		entity.Db.Where("user_id = ?", document.ModifierID).Find(&modifier)
+		entity.Db.Where("user_id = ?", document.CreatorId).Find(&creator)
+		entity.Db.Where("user_id = ?", document.ModifierId).Find(&modifier)
 		documentJson := gin.H{
-			"docId":      document.DocID,
+			"docId":      document.DocId,
 			"docName":    document.Name,
-			"creatorId":  document.CreatorID,
+			"creatorId":  document.CreatorId,
 			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
-			"modifierId": document.ModifierID,
+			"modifierId": document.ModifierId,
 			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		docList = append(docList, documentJson)
@@ -298,8 +298,8 @@ func DocumentRecover(ctx *gin.Context) {
 	}
 
 	var document entity.Document
-	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document.DocID == 0 {
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
@@ -312,7 +312,7 @@ func DocumentRecover(ctx *gin.Context) {
 		return
 	}
 
-	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Update("is_deleted", false)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocId).Update("is_deleted", false)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "文档恢复失败",
@@ -333,8 +333,8 @@ func DocumentSave(ctx *gin.Context) {
 	}
 
 	var document entity.Document
-	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document.DocID == 0 {
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
@@ -342,9 +342,9 @@ func DocumentSave(ctx *gin.Context) {
 	}
 
 	document.Content = request.Content
-	document.ModifierID = request.UserId
+	document.ModifierId = request.UserId
 	document.ModifyTime = time.Now()
-	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocId).Updates(&document)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档保存失败",
@@ -364,8 +364,8 @@ func DocumentExit(ctx *gin.Context) {
 	}
 
 	var document entity.Document
-	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document.DocID == 0 {
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
@@ -378,15 +378,15 @@ func DocumentExit(ctx *gin.Context) {
 		return
 	}
 
-	if time.Now().Sub(docEditTimeMap[request.DocID]) > time.Second*3 {
-		docEditorMap[request.DocID] = []string{}
+	if time.Now().Sub(docEditTimeMap[request.DocId]) > time.Second*3 {
+		docEditorMap[request.DocId] = []string{}
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不在编辑状态",
 		})
 		return
 	}
 
-	editors := docEditorMap[request.DocID]
+	editors := docEditorMap[request.DocId]
 	var nowEditors []string
 	for _, editor := range editors {
 		if editor == request.UserId || time.Now().Sub(docUserTimeMap[editor]) > time.Second*3 {
@@ -395,9 +395,9 @@ func DocumentExit(ctx *gin.Context) {
 		nowEditors = append(nowEditors, editor)
 	}
 
-	document.ModifierID = request.UserId
+	document.ModifierId = request.UserId
 	document.ModifyTime = time.Now()
-	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocID).Updates(&document)
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocId).Updates(&document)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档退出编辑失败",
@@ -421,7 +421,7 @@ func DocumentGet(ctx *gin.Context) {
 
 	var document entity.Document
 	entity.Db.Find(&document, "doc_id = ?", docId)
-	if document.DocID == 0 {
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
@@ -455,8 +455,8 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	}
 
 	var document entity.Document
-	entity.Db.Find(&document, "doc_id = ?", request.DocID)
-	if document.DocID == 0 {
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档不存在",
 		})
@@ -469,7 +469,7 @@ func DocumentApplyEdit(ctx *gin.Context) {
 		return
 	}
 
-	editors := docEditorMap[request.DocID]
+	editors := docEditorMap[request.DocId]
 	docUserTimeMap[request.UserId] = time.Now()
 	var nowEditors []string
 	for _, editor := range editors {
@@ -480,8 +480,8 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	}
 
 	nowEditors = append(nowEditors, request.UserId)
-	docEditorMap[request.DocID] = nowEditors
-	docEditTimeMap[request.DocID] = time.Now()
+	docEditorMap[request.DocId] = nowEditors
+	docEditTimeMap[request.DocId] = time.Now()
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":          "申请编辑状态成功",
 		"nowEditorNum": len(nowEditors),

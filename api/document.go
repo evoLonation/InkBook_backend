@@ -203,17 +203,17 @@ func DocumentRename(ctx *gin.Context) {
 }
 
 func DocumentList(ctx *gin.Context) {
-	projectId, ok := ctx.GetQuery("projectId")
+	parentId, ok := ctx.GetQuery("parentId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "projectId不能为空",
+			"msg": "parentId不能为空",
 		})
 		return
 	}
 
 	var documents []entity.Document
 	var docList []gin.H
-	entity.Db.Where("project_id = ?", projectId).Find(&documents)
+	entity.Db.Where("parent_id = ?", parentId).Find(&documents)
 	sort.SliceStable(documents, func(i, j int) bool {
 		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
 	})
@@ -248,17 +248,17 @@ func DocumentList(ctx *gin.Context) {
 }
 
 func DocumentRecycle(ctx *gin.Context) {
-	projectId, ok := ctx.GetQuery("projectId")
+	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"msg": "projectId不能为空",
+			"msg": "teamId不能为空",
 		})
 		return
 	}
 
 	var documents []entity.Document
 	var docList []gin.H
-	entity.Db.Where("project_id = ?", projectId).Find(&documents)
+	entity.Db.Where("team_id = ?", teamId).Find(&documents)
 	sort.SliceStable(documents, func(i, j int) bool {
 		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
 	})

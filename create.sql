@@ -130,5 +130,6 @@ create table templates
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
     intro       varchar(255),
+    content     LONGTEXT,
     foreign key (creator_id) references users (user_id) on delete cascade
 );

@@ -15,7 +15,7 @@ func SendEmail(address []string, vCode string) error {
 	//设置文件发送的内容
 	content := fmt.Sprintf(`<div>
 			<div>
-				<img src="https://img1.baidu.com/it/u=2394665572,2612107105&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=500">
+				<img src="https://img1.baidu.com/it/u=2394665572,2612107105&fm=253&fmt=auto&app=138&f=JPEG?w=100&h=100" width=100px height=100px>
 			</div>
 			<div>
 				尊敬的%s，您好！

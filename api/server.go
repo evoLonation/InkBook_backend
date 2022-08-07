@@ -68,6 +68,7 @@ func Start(address string) {
 	folderGroup := router.Group("/api/folder")
 	{
 		folderGroup.POST("/create", FolderCreate)
+		folderGroup.POST("/delete", FolderDelete)
 	}
 
 	//document

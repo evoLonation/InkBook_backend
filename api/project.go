@@ -133,6 +133,50 @@ func ProjectDelete(ctx *gin.Context) {
 		})
 		return
 	}
+
+	var folder entity.Folder
+	entity.Db.Where("name = ? AND team_id = ?", project.Name, project.TeamId).First(&folder)
+	if folder == (entity.Folder{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不存在",
+		})
+		return
+	}
+	if folder.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹已删除",
+		})
+		return
+	}
+
+	folder.IsDeleted = true
+	folder.DeleterId = project.CreatorId
+	folder.DeleteTime = time.Now()
+	result = entity.Db.Model(&folder).Where("folder_id = ?", folder.FolderId).Updates(&folder)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目文件夹删除失败",
+		})
+		return
+	}
+
+	var documents []entity.Document
+	entity.Db.Where("parent_id = ?", folder.FolderId).Find(&documents)
+	for _, document := range documents {
+		document.IsDeleted = true
+		document.DeleterId = project.CreatorId
+		document.DeleteTime = time.Now()
+		result = entity.Db.Model(&document).Where("document_id = ?", document.DocId).Updates(&document)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目文件删除失败",
+			})
+			return
+		}
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目删除成功",
 	})

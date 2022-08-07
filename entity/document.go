@@ -7,7 +7,8 @@ import (
 type Document struct {
 	DocId      int       `gorm:"column:doc_id" json:"docId"`
 	Name       string    `gorm:"column:name" json:"name"`
-	ProjectId  int       `gorm:"column:project_id" json:"projectId"`
+	TeamId     int       `gorm:"column:team_id" json:"teamId"`
+	ParentId   int       `gorm:"column:parent_id" json:"parentId"`
 	CreatorId  string    `gorm:"column:creator_id" json:"creatorId"`
 	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
 	ModifierId string    `gorm:"column:modifier_id" json:"modifierId"`

@@ -65,6 +65,7 @@ create table documents
 (
     doc_id      int primary key auto_increment not null,
     name        varchar(20) not null,
+    team_id     int         not null,
     parent_id   int         not null default 0,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
@@ -76,6 +77,7 @@ create table documents
     delete_time datetime             default null,
     content     LONGTEXT,
     editing_cnt int         not null default 0,
+    foreign key (team_id) references teams (team_id) on delete cascade,
     foreign key (creator_id) references users (user_id) on delete cascade,
     foreign key (deleter_id) references users (user_id) on delete set null,
     foreign key (modifier_id) references users (user_id) on delete set null

@@ -14,7 +14,8 @@ import (
 type DocumentCreateRequest struct {
 	Name      string `json:"name"`
 	CreatorId string `json:"creatorId"`
-	ProjectId int    `json:"projectId"`
+	TeamId    int    `json:"teamId"`
+	ParentId  int    `json:"parentId"`
 }
 
 type DocumentDeleteRequest struct {
@@ -69,7 +70,8 @@ func DocumentCreate(ctx *gin.Context) {
 
 	document = entity.Document{
 		Name:       request.Name,
-		ProjectId:  request.ProjectId,
+		TeamId:     request.TeamId,
+		ParentId:   request.ParentId,
 		CreatorId:  request.CreatorId,
 		CreateTime: time.Now(),
 		ModifierId: request.CreatorId,
@@ -88,7 +90,7 @@ func DocumentCreate(ctx *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Where("name = ? AND project_id = ?", request.Name, request.ProjectId).First(&document)
+	entity.Db.Where("name = ? AND parent_id = ?", request.Name, request.ParentId).First(&document)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":   "文档创建成功",
 		"docId": document.DocId,
@@ -179,7 +181,7 @@ func DocumentRename(ctx *gin.Context) {
 	}
 
 	var documents []entity.Document
-	entity.Db.Where("name = ? and project_id = ?", request.NewName, document.ProjectId).Find(&documents)
+	entity.Db.Where("name = ? and parent_id = ?", request.NewName, document.ParentId).Find(&documents)
 	if len(documents) != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "文档名称重复",

@@ -76,6 +76,7 @@ func ProjectCreate(ctx *gin.Context) {
 	folder := entity.Folder{
 		Name:       request.Name,
 		TeamId:     request.TeamId,
+		ParentId:   0,
 		CreatorId:  request.UserId,
 		CreateTime: time.Now(),
 		IsDeleted:  false,

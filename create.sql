@@ -45,11 +45,27 @@ create table projects
     foreign key (creator_id) references users (user_id) on delete cascade
 );
 
+create table folders
+(
+    folder_id   int primary key auto_increment not null,
+    name        varchar(20) not null,
+    team_id     int         not null,
+    parent_id   varchar(20) not null,
+    creator_id  varchar(20) not null,
+    create_time datetime    not null default now(),
+    is_deleted  bool        not null default false,
+    deleter_id  varchar(20),
+    delete_time datetime             default null,
+    foreign key (team_id) references teams (team_id) on delete cascade,
+    foreign key (creator_id) references users (user_id) on delete cascade,
+    foreign key (deleter_id) references users (user_id) on delete cascade
+);
+
 create table documents
 (
     doc_id      int primary key auto_increment not null,
     name        varchar(20) not null,
-    project_id  int         not null,
+    parent_id   varchar(20) not null,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
     modifier_id varchar(20),
@@ -60,7 +76,6 @@ create table documents
     delete_time datetime             default null,
     content     LONGTEXT,
     editing_cnt int         not null default 0,
-    foreign key (project_id) references projects (project_id) on delete cascade,
     foreign key (creator_id) references users (user_id) on delete cascade,
     foreign key (deleter_id) references users (user_id) on delete set null,
     foreign key (modifier_id) references users (user_id) on delete set null
@@ -106,4 +121,14 @@ create table graphs
     foreign key (creator_id) references users (user_id) on delete cascade,
     foreign key (deleter_id) references users (user_id) on delete set null,
     foreign key (modifier_id) references users (user_id) on delete set null
+);
+
+create table templates
+(
+    template_id int primary key auto_increment not null,
+    name        varchar(20) not null,
+    creator_id  varchar(20) not null,
+    create_time datetime    not null default now(),
+    intro       varchar(255),
+    foreign key (creator_id) references users (user_id) on delete cascade
 );

@@ -61,6 +61,7 @@ func Start(address string) {
 		projectGroup.GET("/list-user", ProjectListUser)
 		projectGroup.GET("/recycle", ProjectRecycle)
 		projectGroup.POST("/recover", ProjectRecover)
+		projectGroup.GET("/search", ProjectSearch)
 	}
 
 	//document

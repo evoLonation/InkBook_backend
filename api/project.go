@@ -384,3 +384,42 @@ func ProjectRecover(ctx *gin.Context) {
 		"msg": "项目恢复成功",
 	})
 }
+
+func ProjectSearch(ctx *gin.Context) {
+	keyword, ok := ctx.GetQuery("keyword")
+	teamId, ok := ctx.GetQuery("teamId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "keyword不能为空",
+		})
+		return
+	}
+
+	var projects []entity.Project
+	entity.Db.Where("name LIKE ? AND team_id = ?", keyword, teamId).Find(&projects)
+	sort.SliceStable(projects, func(i, j int) bool {
+		return projects[i].Name < projects[j].Name
+	})
+
+	var projectList []gin.H
+	for _, project := range projects {
+		projectJson := gin.H{
+			"id":     project.ProjectID,
+			"name":   project.Name,
+			"detail": project.Intro,
+			"imgUrl": project.ImgURL,
+		}
+		projectList = append(projectList, projectJson)
+	}
+	if len(projectList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg":      "没有搜索到相关项目",
+			"projects": make([]entity.Project, 0),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":      "项目搜索成功",
+		"projects": projectList,
+	})
+}

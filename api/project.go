@@ -74,7 +74,7 @@ func ProjectCreate(ctx *gin.Context) {
 	}
 
 	folder := entity.Folder{
-		Name:       request.Name,
+		Name:       request.Name + "的项目文档",
 		TeamId:     request.TeamId,
 		ParentId:   0,
 		CreatorId:  request.UserId,
@@ -93,7 +93,7 @@ func ProjectCreate(ctx *gin.Context) {
 	}
 
 	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamId).First(&project)
-	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamId).First(&folder)
+	entity.Db.Where("name = ? AND team_id = ?", request.Name+"的项目文档", request.TeamId).First(&folder)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":       "项目创建成功",
 		"projectId": project.ProjectId,
@@ -135,7 +135,7 @@ func ProjectDelete(ctx *gin.Context) {
 	}
 
 	var folder entity.Folder
-	entity.Db.Where("name = ? AND team_id = ?", project.Name, project.TeamId).First(&folder)
+	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
 	if folder == (entity.Folder{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目文件夹不存在",
@@ -208,7 +208,7 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 	}
 
 	var folder entity.Folder
-	entity.Db.Where("name = ? AND team_id = ?", project.Name, project.TeamId).First(&folder)
+	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
 	if folder == (entity.Folder{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "项目文件夹不存在",
@@ -260,7 +260,7 @@ func ProjectRename(ctx *gin.Context) {
 	}
 
 	var folder entity.Folder
-	entity.Db.Where("name = ? AND team_id = ?", project.Name, project.TeamId).First(&folder)
+	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
 	if folder == (entity.Folder{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目文件夹不存在",
@@ -286,7 +286,7 @@ func ProjectRename(ctx *gin.Context) {
 		return
 	}
 
-	result = entity.Db.Model(&folder).Where("folder_id = ?", folder.FolderId).Update("name", request.NewName)
+	result = entity.Db.Model(&folder).Where("folder_id = ?", folder.FolderId).Update("name", request.NewName+"的项目文档")
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "项目文件夹重命名失败",
@@ -507,7 +507,23 @@ func ProjectRecover(ctx *gin.Context) {
 		return
 	}
 
+	var folder entity.Folder
+	entity.Db.Find(&folder, "name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId)
+	if folder == (entity.Folder{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不存在",
+		})
+		return
+	}
+	if !folder.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不在回收站中",
+		})
+		return
+	}
+
 	entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Update("is_deleted", false)
+	entity.Db.Model(&folder).Where("folder_id = ?", folder.FolderId).Update("is_deleted", false)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目恢复成功",
 	})

@@ -210,10 +210,71 @@ func DocumentList(ctx *gin.Context) {
 		})
 		return
 	}
+	teamId, ok := ctx.GetQuery("teamId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "teamId不能为空",
+		})
+		return
+	}
 
 	var documents []entity.Document
 	var docList []gin.H
-	entity.Db.Where("parent_id = ?", parentId).Find(&documents)
+	entity.Db.Where("parent_id = ? and team_id = ?", parentId, teamId).Find(&documents)
+	sort.SliceStable(documents, func(i, j int) bool {
+		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
+	})
+	for _, document := range documents {
+		if document.IsDeleted {
+			continue
+		}
+		var creator, modifier entity.User
+		entity.Db.Where("user_id = ?", document.CreatorId).Find(&creator)
+		entity.Db.Where("user_id = ?", document.ModifierId).Find(&modifier)
+		documentJson := gin.H{
+			"docId":      document.DocId,
+			"docName":    document.Name,
+			"creatorId":  document.CreatorId,
+			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+			"modifierId": document.ModifierId,
+			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
+		}
+		docList = append(docList, documentJson)
+	}
+	if len(docList) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"msg":     "当前文件夹内没有文档",
+			"docList": make([]entity.Document, 0),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":     "文档列表获取成功",
+		"docList": docList,
+	})
+}
+
+func DocumentProject(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "projectId不能为空",
+		})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", projectId)
+	if project.ProjectId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "项目不存在",
+		})
+		return
+	}
+
+	var documents []entity.Document
+	var docList []gin.H
+	entity.Db.Where("name = ?", project.Name+"的项目文档").Find(&documents)
 	sort.SliceStable(documents, func(i, j int) bool {
 		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
 	})
@@ -436,13 +497,6 @@ func DocumentGet(ctx *gin.Context) {
 		return
 	}
 
-	//var jsonContent gin.H
-	//if err := json.Unmarshal([]byte(document.Content), &jsonContent); err != nil {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{
-	//		"msg": "JSON格式内容解析失败",
-	//	})
-	//	return
-	//}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":     "文档获取成功",
 		"content": document.Content,
@@ -487,6 +541,7 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":          "申请编辑状态成功",
 		"nowEditorNum": len(nowEditors),
+		"editorList":   nowEditors,
 	})
 }
 

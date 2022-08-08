@@ -69,7 +69,10 @@ func Start(address string) {
 	folderGroup := router.Group("/api/folder")
 	{
 		folderGroup.POST("/create", FolderCreate)
-		folderGroup.POST("/delete", FolderDelete)
+		folderGroup.POST("/complete-delete", FolderCompleteDelete)
+		folderGroup.POST("/rename", FolderRename)
+		folderGroup.GET("/list", FolderList)
+		folderGroup.POST("/move", FolderMove)
 	}
 
 	//document
@@ -80,6 +83,7 @@ func Start(address string) {
 		documentGroup.POST("/complete-delete", DocumentCompleteDelete)
 		documentGroup.POST("/rename", DocumentRename)
 		documentGroup.GET("/list", DocumentList)
+		documentGroup.GET("/project", DocumentProject)
 		documentGroup.GET("/recycle", DocumentRecycle)
 		documentGroup.POST("/recover", DocumentRecover)
 		documentGroup.POST("/save", DocumentSave)

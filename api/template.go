@@ -64,6 +64,9 @@ func TemplateCreate(ctx *gin.Context) {
 		Intro:      request.Intro,
 		Content:    request.Content,
 	}
+	if template.Intro == "" {
+		template.Intro = "暂无模板简介"
+	}
 	result := entity.Db.Create(&template)
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

@@ -26,6 +26,11 @@ type FolderRenameRequest struct {
 	NewName  string `json:"newName"`
 }
 
+type FolderMoveRequest struct {
+	DocId    int `json:"docId"`
+	FolderId int `json:"folderId"`
+}
+
 func FolderCreate(ctx *gin.Context) {
 	var request FolderCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -265,5 +270,53 @@ func FolderList(ctx *gin.Context) {
 }
 
 func FolderMove(ctx *gin.Context) {
+	var request FolderMoveRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	var document entity.Document
+	entity.Db.Find(&document, "doc_id = ?", request.DocId)
+	if document.DocId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "文档不存在",
+		})
+		return
+	}
+	if document.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "文档已删除",
+		})
+		return
+	}
+
+	var folder entity.Folder
+	if request.FolderId != 0 {
+		entity.Db.Find(&folder, "folder_id = ?", request.FolderId)
+		if folder.FolderId == 0 {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"msg": "文件夹不存在",
+			})
+			return
+		}
+		if folder.IsDeleted {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"msg": "文件夹已删除",
+			})
+			return
+		}
+	}
+
+	result := entity.Db.Model(&document).Where("doc_id = ?", request.DocId).Update("parent_id", request.FolderId)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "文档移动失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "文档移动成功",
+	})
 }

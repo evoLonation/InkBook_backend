@@ -49,6 +49,12 @@ func TemplateCreate(ctx *gin.Context) {
 		})
 		return
 	}
+	if request.Type != 1 && request.Type != 2 && request.Type != 3 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "模板类型错误",
+		})
+		return
+	}
 
 	template = entity.Template{
 		Name:       request.Name,

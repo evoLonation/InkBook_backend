@@ -2,6 +2,10 @@ package entity
 
 import "time"
 
+// Template type reference:
+// 1: documents
+// 2: prototypes
+// 3: graphs
 type Template struct {
 	TemplateId int       `gorm:"column:template_id" json:"templateId"`
 	Name       string    `gorm:"column:name" json:"name"`

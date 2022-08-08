@@ -46,6 +46,12 @@ func FolderCreate(ctx *gin.Context) {
 		})
 		return
 	}
+	if strings.HasSuffix(request.Name, "的项目文档") {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "以“的项目文档”结尾是项目文档文件夹，自定义文件夹名不能以其结尾",
+		})
+		return
+	}
 
 	folder = entity.Folder{
 		Name:       request.Name,

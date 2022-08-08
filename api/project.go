@@ -507,7 +507,23 @@ func ProjectRecover(ctx *gin.Context) {
 		return
 	}
 
+	var folder entity.Folder
+	entity.Db.Find(&folder, "name = ? AND team_id = ?", project.Name, project.TeamId)
+	if folder == (entity.Folder{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不存在",
+		})
+		return
+	}
+	if !folder.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不在回收站中",
+		})
+		return
+	}
+
 	entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Update("is_deleted", false)
+	entity.Db.Model(&folder).Where("folder_id = ?", folder.FolderId).Update("is_deleted", false)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目恢复成功",
 	})

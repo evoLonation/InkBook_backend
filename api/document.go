@@ -210,10 +210,17 @@ func DocumentList(ctx *gin.Context) {
 		})
 		return
 	}
+	teamId, ok := ctx.GetQuery("teamId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "teamId不能为空",
+		})
+		return
+	}
 
 	var documents []entity.Document
 	var docList []gin.H
-	entity.Db.Where("parent_id = ?", parentId).Find(&documents)
+	entity.Db.Where("parent_id = ? and team_id = ?", parentId, teamId).Find(&documents)
 	sort.SliceStable(documents, func(i, j int) bool {
 		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
 	})

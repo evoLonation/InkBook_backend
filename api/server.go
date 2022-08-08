@@ -11,7 +11,8 @@ func Start(address string) {
 	// write routers here
 	router.GET("/hello", hello)
 	router.GET("/api/url/./localFile/document/:url", Url)
-	router.POST("/api/translate", Translate)
+	router.POST("/api/translate2pdf", Translate2Pdf)
+	router.POST("/api/translate2md", Translate2Md)
 
 	//user
 	userGroup := router.Group("/api/user")

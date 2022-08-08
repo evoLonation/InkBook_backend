@@ -83,7 +83,7 @@ func OpenFile(filename string) (*os.File, error) {
 	return os.OpenFile(filename, os.O_APPEND, 0666) //打开文件
 }
 
-func main() {
+func test() {
 	file, err := os.Create("sample3.html")
 	if err != nil { // 如果有错误，打印错误，同时返回
 		fmt.Println("err = ", err)

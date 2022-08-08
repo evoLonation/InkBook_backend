@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	md "github.com/JohannesKaufmann/html-to-markdown"
 	pdf "github.com/adrg/go-wkhtmltopdf"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -24,7 +25,7 @@ func OpenFile(filename string) (*os.File, error) {
 	return os.OpenFile(filename, os.O_APPEND, 0666) //打开文件
 }
 
-func Translate(c *gin.Context) {
+func Translate2Pdf(c *gin.Context) {
 	var translateRequest TranslateRequest
 	err := c.ShouldBindJSON(&translateRequest)
 	if err != nil {
@@ -121,5 +122,37 @@ func Translate(c *gin.Context) {
 	}(outFile)
 	if err := converter.Run(outFile); err != nil {
 		log.Fatal(err)
+	}
+}
+func Translate2Md(c *gin.Context) {
+	var translateRequest TranslateRequest
+	err := c.ShouldBindJSON(&translateRequest)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "参数错误",
+		})
+		return
+	}
+	data := translateRequest.Data
+	converter := md.NewConverter("", true, nil)
+
+	markdown, err := converter.ConvertString(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	file, err := os.Create("out.md")
+	if err != nil { // 如果有错误，打印错误，同时返回
+		fmt.Println("err = ", err)
+		return
+	}
+	defer file.Close() // 在退出整个函数时，关闭文件
+	f1, err1 := OpenFile("out.md")
+	if err1 != nil {
+		log.Fatal(err1.Error())
+	}
+	defer f1.Close()
+	_, err2 := io.WriteString(f1, markdown) //写入文件(字符串)
+	if err2 != nil {
+		log.Fatal(err2.Error())
 	}
 }

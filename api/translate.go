@@ -26,14 +26,7 @@ func OpenFile(filename string) (*os.File, error) {
 }
 
 func Translate2Pdf(c *gin.Context) {
-	data, ok := c.GetQuery("data")
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数错误",
-		})
-		return
-	}
-	/*var translateRequest TranslateRequest
+	var translateRequest TranslateRequest
 	err := c.ShouldBindJSON(&translateRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -41,7 +34,7 @@ func Translate2Pdf(c *gin.Context) {
 		})
 		return
 	}
-	data := translateRequest.Data*/
+	data := translateRequest.Data
 	file, err := os.Create("sample.html")
 	if err != nil { // 如果有错误，打印错误，同时返回
 		fmt.Println("err = ", err)
@@ -133,13 +126,15 @@ func Translate2Pdf(c *gin.Context) {
 	c.File("out.pdf")
 }
 func Translate2Md(c *gin.Context) {
-	data, ok := c.GetQuery("data")
-	if !ok {
+	var translateRequest TranslateRequest
+	err := c.ShouldBindJSON(&translateRequest)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "参数错误",
 		})
 		return
 	}
+	data := translateRequest.Data
 	converter := md.NewConverter("", true, nil)
 
 	markdown, err := converter.ConvertString(data)
@@ -161,5 +156,11 @@ func Translate2Md(c *gin.Context) {
 	if err2 != nil {
 		log.Fatal(err2.Error())
 	}
+	c.File("out.md")
+}
+func DownloadPdf(c *gin.Context) {
+	c.File("out.pdf")
+}
+func DownloadMd(c *gin.Context) {
 	c.File("out.md")
 }

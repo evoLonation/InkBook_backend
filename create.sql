@@ -129,6 +129,7 @@ create table templates
 (
     template_id int primary key auto_increment not null,
     name        varchar(20) not null,
+    type        int         not null,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
     intro       varchar(255),

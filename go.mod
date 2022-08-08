@@ -3,6 +3,8 @@ module backend
 go 1.18
 
 require (
+	github.com/JohannesKaufmann/html-to-markdown v1.3.5
+	github.com/adrg/go-wkhtmltopdf v0.3.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	gorm.io/driver/mysql v1.3.5
@@ -10,7 +12,8 @@ require (
 )
 
 require (
-	github.com/garyburd/redigo v1.6.3 // indirect
+	github.com/PuerkitoBio/goquery v1.5.1 // indirect
+	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
@@ -31,7 +34,5 @@ require (
 	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

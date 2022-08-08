@@ -258,7 +258,7 @@ func FolderList(ctx *gin.Context) {
 			"folderId":   folder.FolderId,
 			"name":       folder.Name,
 			"creatorId":  folder.CreatorId,
-			"createInfo": string(folder.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
+			"createInfo": string(folder.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
 		}
 		folderList = append(folderList, folderJson)
 	}

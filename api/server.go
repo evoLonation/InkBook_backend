@@ -124,6 +124,18 @@ func Start(address string) {
 		prototypeGroup.POST("/apply-edit", PrototypeApplyEdit)
 	}
 
+	//template
+	templateGroup := router.Group("/api/template")
+	{
+		templateGroup.POST("/create", TemplateCreate)
+		templateGroup.POST("/complete-delete", TemplateCompleteDelete)
+		templateGroup.POST("/rename", TemplateRename)
+		templateGroup.POST("/modify/intro", TemplateModifyIntro)
+		templateGroup.POST("/modify/content", TemplateModifyContent)
+		templateGroup.GET("/list", TemplateList)
+		templateGroup.GET("/get", TemplateGet)
+	}
+
 	err := router.Run(address)
 	if err != nil {
 		return

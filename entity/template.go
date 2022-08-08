@@ -5,7 +5,7 @@ import "time"
 type Template struct {
 	TemplateId int       `gorm:"column:template_id" json:"templateId"`
 	Name       string    `gorm:"column:name" json:"name"`
-	Type       string    `gorm:"column:type" json:"type"`
+	Type       int       `gorm:"column:type" json:"type"`
 	CreatorId  string    `gorm:"column:creator_id" json:"creatorId"`
 	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
 	Intro      string    `gorm:"column:intro" json:"intro"`

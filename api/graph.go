@@ -224,9 +224,9 @@ func GraphList(ctx *gin.Context) {
 			"graphId":    graph.GraphId,
 			"name":       graph.Name,
 			"creatorId":  graph.CreatorId,
-			"CreateInfo": string(graph.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
+			"CreateInfo": string(graph.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
 			"ModifierId": graph.ModifierId,
-			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04:05")) + " by " + modifier.Nickname,
+			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		graphList = append(graphList, graphJson)
 	}
@@ -269,9 +269,9 @@ func GraphRecycle(ctx *gin.Context) {
 			"graphId":    graph.GraphId,
 			"name":       graph.Name,
 			"creatorId":  graph.CreatorId,
-			"CreateInfo": string(graph.CreateTime.Format("2006-01-02 15:04:05")) + " by " + creator.Nickname,
+			"CreateInfo": string(graph.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
 			"ModifierId": graph.ModifierId,
-			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04:05")) + " by " + modifier.Nickname,
+			"ModifyInfo": string(graph.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
 		}
 		graphList = append(graphList, graphJson)
 	}

@@ -70,7 +70,7 @@ func Start(address string) {
 		folderGroup.POST("/create", FolderCreate)
 		folderGroup.POST("/complete-delete", FolderCompleteDelete)
 		folderGroup.POST("/rename", FolderRename)
-		folderGroup.POST("/list", FolderList)
+		folderGroup.GET("/list", FolderList)
 	}
 
 	//document
@@ -81,6 +81,7 @@ func Start(address string) {
 		documentGroup.POST("/complete-delete", DocumentCompleteDelete)
 		documentGroup.POST("/rename", DocumentRename)
 		documentGroup.GET("/list", DocumentList)
+		documentGroup.GET("/project", DocumentProject)
 		documentGroup.GET("/recycle", DocumentRecycle)
 		documentGroup.POST("/recover", DocumentRecover)
 		documentGroup.POST("/save", DocumentSave)

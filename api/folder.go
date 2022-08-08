@@ -107,7 +107,7 @@ func FolderDelete(ctx *gin.Context) {
 		document.IsDeleted = true
 		document.DeleterId = request.DeleterId
 		document.DeleteTime = time.Now()
-		result = entity.Db.Model(&document).Where("document_id = ?", document.DocId).Updates(&document)
+		result = entity.Db.Model(&document).Where("doc_id = ?", document.DocId).Updates(&document)
 		if result.Error != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"msg":   "文件夹中文件删除失败",
@@ -137,6 +137,12 @@ func FolderCompleteDelete(ctx *gin.Context) {
 		})
 		return
 	}
+	if strings.HasSuffix(folder.Name, "的项目文档") {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "该文件夹为项目文档文件夹，不能被删除",
+		})
+		return
+	}
 
 	var documents []entity.Document
 	entity.Db.Where("parent_id = ?", request.FolderId).Find(&documents)
@@ -144,7 +150,7 @@ func FolderCompleteDelete(ctx *gin.Context) {
 		document.IsDeleted = true
 		document.DeleterId = request.DeleterId
 		document.DeleteTime = time.Now()
-		result := entity.Db.Model(&document).Where("document_id = ?", document.DocId).Updates(&document)
+		result := entity.Db.Model(&document).Where("doc_id = ?", document.DocId).Updates(&document)
 		if result.Error != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"msg":   "文件夹中文件删除失败",
@@ -152,7 +158,7 @@ func FolderCompleteDelete(ctx *gin.Context) {
 			})
 			return
 		}
-		result = entity.Db.Model(&document).Where("document_id = ?", document.DocId).Update("parent_id", 0)
+		result = entity.Db.Model(&document).Where("doc_id = ?", document.DocId).Update("parent_id", 0)
 	}
 
 	result := entity.Db.Where("folder_id = ?", folder.FolderId).Delete(&folder)
@@ -256,4 +262,8 @@ func FolderList(ctx *gin.Context) {
 		"msg":        "文件夹列表获取成功",
 		"folderList": folderList,
 	})
+}
+
+func FolderMove(ctx *gin.Context) {
+
 }

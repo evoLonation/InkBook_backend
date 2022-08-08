@@ -93,7 +93,7 @@ func ProjectCreate(ctx *gin.Context) {
 	}
 
 	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamId).First(&project)
-	entity.Db.Where("name = ? AND team_id = ?", request.Name, request.TeamId).First(&folder)
+	entity.Db.Where("name = ? AND team_id = ?", request.Name+"的项目文档", request.TeamId).First(&folder)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":       "项目创建成功",
 		"projectId": project.ProjectId,

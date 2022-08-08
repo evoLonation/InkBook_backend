@@ -71,6 +71,7 @@ func Start(address string) {
 		folderGroup.POST("/complete-delete", FolderCompleteDelete)
 		folderGroup.POST("/rename", FolderRename)
 		folderGroup.GET("/list", FolderList)
+		folderGroup.POST("/move", FolderMove)
 	}
 
 	//document

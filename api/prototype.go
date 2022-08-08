@@ -478,5 +478,6 @@ func PrototypeApplyEdit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":          "原型申请编辑成功",
 		"nowEditorNum": len(nowEditors),
+		"editorList":   nowEditors,
 	})
 }

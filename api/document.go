@@ -534,6 +534,7 @@ func DocumentApplyEdit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":          "申请编辑状态成功",
 		"nowEditorNum": len(nowEditors),
+		"editorList":   nowEditors,
 	})
 }
 

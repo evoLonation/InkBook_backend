@@ -15,6 +15,7 @@ func Start(address string) {
 	router.POST("/api/translate2md", Translate2Md)
 	router.GET("api/downloadpdf", DownloadPdf)
 	router.GET("api/downloadmd", DownloadMd)
+	router.POST("api/img", DocumentImg)
 
 	//user
 	userGroup := router.Group("/api/user")
@@ -94,7 +95,7 @@ func Start(address string) {
 		documentGroup.POST("/exit", DocumentExit)
 		documentGroup.GET("/get", DocumentGet)
 		documentGroup.POST("/apply-edit", DocumentApplyEdit)
-		documentGroup.POST("/img", DocumentImg)
+
 	}
 
 	//graph

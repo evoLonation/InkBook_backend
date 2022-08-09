@@ -286,16 +286,38 @@ func FolderList(ctx *gin.Context) {
 			"projectFolderList": projectFolderList,
 		})
 	}
-	if len(folderList) == 1 && len(projectFolderList) == 0 {
-		ctx.JSON(http.StatusOK, gin.H{
-			"msg":        "当前团队没有文件夹",
-			"folderList": folderList,
-		})
-		return
+
+	var documents []entity.Document
+	var docList []gin.H
+	entity.Db.Where("parent_id = ? and team_id = ?", 0, teamId).Find(&documents)
+	sort.SliceStable(documents, func(i, j int) bool {
+		return documents[i].CreateTime.Unix() > documents[i].CreateTime.Unix()
+	})
+	for _, document := range documents {
+		if document.IsDeleted {
+			continue
+		}
+		var creator, modifier entity.User
+		entity.Db.Where("user_id = ?", document.CreatorId).Find(&creator)
+		entity.Db.Where("user_id = ?", document.ModifierId).Find(&modifier)
+		documentJson := gin.H{
+			"docId":      document.DocId,
+			"docName":    document.Name,
+			"creatorId":  document.CreatorId,
+			"createInfo": string(document.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+			"modifierId": document.ModifierId,
+			"modifyInfo": string(document.ModifyTime.Format("2006-01-02 15:04")) + " by " + modifier.Nickname,
+		}
+		docList = append(docList, documentJson)
 	}
+	if len(docList) == 0 {
+		docList = make([]gin.H, 0)
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":        "文件夹列表获取成功",
+		"msg":        "文档中心根目录列表获取成功",
 		"folderList": folderList,
+		"docList":    docList,
 	})
 }
 

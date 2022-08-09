@@ -244,6 +244,7 @@ func FolderList(ctx *gin.Context) {
 
 	var folders []entity.Folder
 	var folderList []gin.H
+	var projectFolderList []gin.H
 	entity.Db.Where("team_id = ?", teamId).Find(&folders)
 	sort.SliceStable(folders, func(i, j int) bool {
 		return folders[i].CreateTime.Unix() > folders[j].CreateTime.Unix()
@@ -254,18 +255,41 @@ func FolderList(ctx *gin.Context) {
 		}
 		var creator entity.User
 		entity.Db.Where("user_id = ?", folder.CreatorId).Find(&creator)
-		folderJson := gin.H{
-			"folderId":   folder.FolderId,
-			"name":       folder.Name,
-			"creatorId":  folder.CreatorId,
-			"createInfo": string(folder.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+		if strings.HasSuffix(folder.Name, "的项目文档") {
+			var project entity.Project
+			entity.Db.Where("name = ?", strings.TrimSuffix(folder.Name, "的项目文档")).Find(&project)
+			folderJson := gin.H{
+				"folderId":   folder.FolderId,
+				"name":       folder.Name,
+				"creatorId":  folder.CreatorId,
+				"createInfo": string(folder.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+				"projectId":  project.ProjectId,
+			}
+			projectFolderList = append(projectFolderList, folderJson)
+		} else {
+			folderJson := gin.H{
+				"folderId":   folder.FolderId,
+				"name":       folder.Name,
+				"creatorId":  folder.CreatorId,
+				"createInfo": string(folder.CreateTime.Format("2006-01-02 15:04")) + " by " + creator.Nickname,
+			}
+			folderList = append(folderList, folderJson)
 		}
-		folderList = append(folderList, folderJson)
 	}
-	if len(folderList) == 0 {
+	if len(projectFolderList) == 0 {
+		folderList = append(folderList, gin.H{
+			"项目文档区": make([]gin.H, 0),
+		})
+	} else {
+		folderList = append(folderList, gin.H{
+			"name":              "项目文档区",
+			"projectFolderList": projectFolderList,
+		})
+	}
+	if len(folderList) == 1 && len(projectFolderList) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
 			"msg":        "当前团队没有文件夹",
-			"folderList": make([]gin.H, 0),
+			"folderList": folderList,
 		})
 		return
 	}

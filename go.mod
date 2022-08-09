@@ -30,6 +30,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/tcort/wkhtmltox v1.1.5 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
+	github.com/wkhtmltopdf/wkhtmltopdf v0.0.0-20220629043738-024b2b2bb459 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect

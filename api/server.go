@@ -68,6 +68,12 @@ func Start(address string) {
 		projectGroup.GET("/search", ProjectSearch)
 	}
 
+	//file
+	fileGroup := router.Group("/api/file")
+	{
+		fileGroup.GET("/list", FileList)
+	}
+
 	//folder
 	folderGroup := router.Group("/api/folder")
 	{
@@ -87,7 +93,7 @@ func Start(address string) {
 		documentGroup.POST("/complete-delete", DocumentCompleteDelete)
 		documentGroup.POST("/rename", DocumentRename)
 		documentGroup.GET("/list", DocumentList)
-		documentGroup.GET("/project-list", DocumentProjectList)
+		//documentGroup.GET("/project-list", DocumentProjectList)
 		documentGroup.GET("/recycle", DocumentRecycle)
 		documentGroup.POST("/recover", DocumentRecover)
 		documentGroup.POST("/save", DocumentSave)

@@ -369,6 +369,26 @@ func ProjectModifyImg(ctx *gin.Context) {
 	})
 }
 
+func ProjectGetImg(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "projectId不能为空",
+		})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", projectId)
+	if project == (entity.Project{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不存在",
+		})
+		return
+	}
+	ctx.File("./localFile/project/" + project.ImgURL)
+}
+
 func ProjectListTeam(ctx *gin.Context) {
 	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {

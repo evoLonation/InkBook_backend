@@ -3,7 +3,10 @@ package api
 import (
 	"backend/entity"
 	"github.com/gin-gonic/gin"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"sort"
 	"time"
 )
@@ -59,7 +62,7 @@ func ProjectCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleteTime: time.Now(),
 		Intro:      request.Detail,
-		ImgURL:     request.ImgURL,
+		ImgURL:     "default.jpg",
 	}
 	if project.Intro == "" {
 		project.Intro = "暂无项目简介"
@@ -326,14 +329,33 @@ func ProjectModifyIntro(ctx *gin.Context) {
 }
 
 func ProjectModifyImg(ctx *gin.Context) {
-	var request ProjectModifyImgRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	file, header, err := ctx.Request.FormFile("newImg")
+	filename := header.Filename
+	output, err := os.Create("./localFile/project/" + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(output *os.File) {
+		err := output.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(output)
+	_, err = io.Copy(output, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	projectId, ok := ctx.GetPostForm("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "projectId参数错误",
+		})
 		return
 	}
 
 	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
+	entity.Db.Find(&project, "project_id = ?", projectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "项目不存在",
@@ -341,8 +363,7 @@ func ProjectModifyImg(ctx *gin.Context) {
 		return
 	}
 
-	project.ImgURL = request.NewImgURL
-	entity.Db.Model(&project).Where("project_id = ?", request.ProjectId).Update("img_url", request.NewImgURL)
+	entity.Db.Model(&project).Where("project_id = ?", projectId).Update("img_url", filename)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目图片修改成功",
 	})

@@ -9,9 +9,10 @@ import (
 )
 
 type GraphCreateRequest struct {
-	Name      string `json:"name"`
-	CreatorId string `json:"creatorId"`
-	ProjectId int    `json:"projectId"`
+	Name       string `json:"name"`
+	CreatorId  string `json:"creatorId"`
+	ProjectId  int    `json:"projectId"`
+	TemplateId int    `json:"templateId"`
 }
 
 type GraphDeleteRequest struct {
@@ -64,6 +65,21 @@ func GraphCreate(ctx *gin.Context) {
 		return
 	}
 
+	var template entity.Template
+	var content string
+	entity.Db.Find(&template, "template_id = ?", request.TemplateId)
+	if template.TemplateId != 0 {
+		if template.TemplateId == 0 || template.Type != 3 {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"msg": "模板不存在",
+			})
+			return
+		}
+		content = template.Content
+	} else {
+		content = ""
+	}
+
 	graph = entity.Graph{
 		Name:       request.Name,
 		ProjectId:  request.ProjectId,
@@ -75,7 +91,7 @@ func GraphCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterId:  request.CreatorId,
 		DeleteTime: time.Now(),
-		Content:    "",
+		Content:    content,
 		EditingCnt: 0,
 	}
 	result := entity.Db.Create(&graph)

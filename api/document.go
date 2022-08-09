@@ -12,16 +12,18 @@ import (
 )
 
 type DocumentCreateRequest struct {
-	Name      string `json:"name"`
-	CreatorId string `json:"creatorId"`
-	TeamId    int    `json:"teamId"`
-	ParentId  int    `json:"parentId"`
+	Name       string `json:"name"`
+	CreatorId  string `json:"creatorId"`
+	TeamId     int    `json:"teamId"`
+	ParentId   int    `json:"parentId"`
+	TemplateId int    `json:"templateId"`
 }
 
 type DocumentProjectCreateRequest struct {
-	Name      string `json:"name"`
-	CreatorId string `json:"creatorId"`
-	ProjectId int    `json:"projectId"`
+	Name       string `json:"name"`
+	CreatorId  string `json:"creatorId"`
+	ProjectId  int    `json:"projectId"`
+	TemplateId int    `json:"templateId"`
 }
 
 type DocumentDeleteRequest struct {
@@ -74,6 +76,21 @@ func DocumentCreate(ctx *gin.Context) {
 		return
 	}
 
+	var template entity.Template
+	var content string
+	if request.TemplateId != 0 {
+		entity.Db.Find(&template, "template_id = ?", request.TemplateId)
+		if template.TemplateId == 0 || template.Type != 1 {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"msg": "模板不存在",
+			})
+			return
+		}
+		content = template.Content
+	} else {
+		content = ""
+	}
+
 	document = entity.Document{
 		Name:       request.Name,
 		TeamId:     request.TeamId,
@@ -86,7 +103,7 @@ func DocumentCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterId:  request.CreatorId,
 		DeleteTime: time.Now(),
-		Content:    "",
+		Content:    content,
 	}
 	result := entity.Db.Create(&document)
 	if result.Error != nil {
@@ -149,6 +166,21 @@ func DocumentProjectCreate(ctx *gin.Context) {
 		return
 	}
 
+	var template entity.Template
+	var content string
+	if request.TemplateId != 0 {
+		entity.Db.Find(&template, "template_id = ?", request.TemplateId)
+		if template.TemplateId == 0 || template.Type != 1 {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"msg": "模板不存在",
+			})
+			return
+		}
+		content = template.Content
+	} else {
+		content = ""
+	}
+
 	document = entity.Document{
 		Name:       request.Name,
 		TeamId:     project.TeamId,
@@ -161,7 +193,7 @@ func DocumentProjectCreate(ctx *gin.Context) {
 		IsDeleted:  false,
 		DeleterId:  request.CreatorId,
 		DeleteTime: time.Now(),
-		Content:    "",
+		Content:    content,
 	}
 	result := entity.Db.Create(&document)
 	if result.Error != nil {

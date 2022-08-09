@@ -22,7 +22,7 @@ func OpenFile(filename string) (*os.File, error) {
 		return os.Create(filename) //创建文件
 	}
 	fmt.Println("文件存在")
-	return os.OpenFile(filename, os.O_APPEND, 0666) //打开文件
+	return os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, os.ModeAppend) //打开文件
 }
 
 func Translate2Pdf(c *gin.Context) {

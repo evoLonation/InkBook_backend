@@ -82,11 +82,12 @@ func Start(address string) {
 	documentGroup := router.Group("/api/document")
 	{
 		documentGroup.POST("/create", DocumentCreate)
+		documentGroup.POST("/project-create", DocumentProjectCreate)
 		documentGroup.POST("/delete", DocumentDelete)
 		documentGroup.POST("/complete-delete", DocumentCompleteDelete)
 		documentGroup.POST("/rename", DocumentRename)
 		documentGroup.GET("/list", DocumentList)
-		documentGroup.GET("/project", DocumentProject)
+		documentGroup.GET("/project-list", DocumentProjectList)
 		documentGroup.GET("/recycle", DocumentRecycle)
 		documentGroup.POST("/recover", DocumentRecover)
 		documentGroup.POST("/save", DocumentSave)

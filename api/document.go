@@ -18,6 +18,12 @@ type DocumentCreateRequest struct {
 	ParentId  int    `json:"parentId"`
 }
 
+type DocumentProjectCreateRequest struct {
+	Name      string `json:"name"`
+	CreatorId string `json:"creatorId"`
+	ProjectId int    `json:"projectId"`
+}
+
 type DocumentDeleteRequest struct {
 	DocId     int    `json:"docId"`
 	DeleterId string `json:"deleterId"`
@@ -90,7 +96,82 @@ func DocumentCreate(ctx *gin.Context) {
 		})
 		return
 	}
-	entity.Db.Where("name = ? AND parent_id = ?", request.Name, request.ParentId).First(&document)
+	entity.Db.Where("name = ? and team_id = ?", request.Name, request.TeamId).First(&document)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":   "文档创建成功",
+		"docId": document.DocId,
+	})
+}
+
+func DocumentProjectCreate(ctx *gin.Context) {
+	var request DocumentProjectCreateRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
+	if project.ProjectId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "项目不存在",
+		})
+		return
+	}
+	if project.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "项目已删除",
+		})
+		return
+	}
+
+	var folder entity.Folder
+	entity.Db.Find(&folder, "name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId)
+	if folder.FolderId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "项目文档文件夹不存在",
+		})
+		return
+	}
+	if folder.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "项目文档文件夹已删除",
+		})
+		return
+	}
+
+	var document entity.Document
+	entity.Db.Find(&document, "name = ? and team_id = ?", request.Name, project.TeamId)
+	if document.DocId != 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "文档已存在",
+		})
+		return
+	}
+
+	document = entity.Document{
+		Name:       request.Name,
+		TeamId:     project.TeamId,
+		ParentId:   folder.FolderId,
+		CreatorId:  request.CreatorId,
+		CreateTime: time.Now(),
+		ModifierId: request.CreatorId,
+		ModifyTime: time.Now(),
+		IsEditing:  false,
+		IsDeleted:  false,
+		DeleterId:  request.CreatorId,
+		DeleteTime: time.Now(),
+		Content:    "",
+	}
+	result := entity.Db.Create(&document)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "文档创建失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	entity.Db.Where("name = ? and team_id = ?", request.Name, project.TeamId).First(&document)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":   "文档创建成功",
 		"docId": document.DocId,
@@ -254,7 +335,7 @@ func DocumentList(ctx *gin.Context) {
 	})
 }
 
-func DocumentProject(ctx *gin.Context) {
+func DocumentProjectList(ctx *gin.Context) {
 	projectId, ok := ctx.GetQuery("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{

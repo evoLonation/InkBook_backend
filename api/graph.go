@@ -255,7 +255,7 @@ func GraphModifyImg(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	entity.Db.Model(&graph).Where("graph_id = ?", graphId).Update("img", filename)
+	entity.Db.Model(&graph).Where("graph_id = ?", graphId).Update("img", strconv.Itoa(graph.GraphId)+filename)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "UML图封面修改成功",
 	})

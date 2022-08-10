@@ -3,7 +3,10 @@ package api
 import (
 	"backend/entity"
 	"github.com/gin-gonic/gin"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"sort"
 	"time"
 )
@@ -93,6 +96,7 @@ func GraphCreate(ctx *gin.Context) {
 		DeleteTime: time.Now(),
 		Content:    content,
 		EditingCnt: 0,
+		Img:        "default.jpg",
 	}
 	result := entity.Db.Create(&graph)
 	if result.Error != nil {
@@ -212,6 +216,67 @@ func GraphRename(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "UML图重命名成功",
 	})
+}
+
+func GraphModifyImg(ctx *gin.Context) {
+	file, header, err := ctx.Request.FormFile("newImg")
+	filename := header.Filename
+	output, err := os.Create("./localFile/graph/" + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(output *os.File) {
+		err := output.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(output)
+	_, err = io.Copy(output, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	graphId, ok := ctx.GetPostForm("graphId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "graphId不能为空",
+		})
+		return
+	}
+
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", graphId)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "UML图不存在",
+		})
+		return
+	}
+
+	entity.Db.Model(&graph).Where("graph_id = ?", graphId).Update("img", filename)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "UML图封面修改成功",
+	})
+}
+
+func GraphGetImg(ctx *gin.Context) {
+	graphId, ok := ctx.GetQuery("graphId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "graphId不能为空",
+		})
+		return
+	}
+
+	var graph entity.Graph
+	entity.Db.Find(&graph, "graph_id = ?", graphId)
+	if graph == (entity.Graph{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "UML图不存在",
+		})
+		return
+	}
+	ctx.File("./localFile/graph/" + graph.Img)
 }
 
 func GraphList(ctx *gin.Context) {

@@ -499,7 +499,7 @@ func ProjectModifyImg(ctx *gin.Context) {
 	projectId, ok := ctx.GetPostForm("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "projectId参数错误",
+			"msg": "projectId不能为空",
 		})
 		return
 	}
@@ -508,7 +508,7 @@ func ProjectModifyImg(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", projectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
@@ -523,7 +523,7 @@ func ProjectGetImg(ctx *gin.Context) {
 	projectId, ok := ctx.GetQuery("projectId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "projectId不能为空",
+			"msg": "projectId不能为空",
 		})
 		return
 	}
@@ -532,7 +532,7 @@ func ProjectGetImg(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", projectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
@@ -543,7 +543,7 @@ func ProjectListTeam(ctx *gin.Context) {
 	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "teamId不能为空",
+			"msg": "teamId不能为空",
 		})
 		return
 	}

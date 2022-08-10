@@ -4,12 +4,18 @@ import (
 	"fmt"
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	pdf "github.com/adrg/go-wkhtmltopdf"
+
+	//Pdf "github.com/adrg/go-wkhtmltopdf"
+
+	//pdf "github.com/adrg/go-wkhtmltopdf"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"net/http"
 	"os"
 )
+
+var flagForPdf = 0
 
 type TranslateRequest struct {
 	Data string `json:"data"`
@@ -26,6 +32,7 @@ func OpenFile(filename string) (*os.File, error) {
 }
 
 func Translate2Pdf(c *gin.Context) {
+	fmt.Println(flagForPdf)
 	var translateRequest TranslateRequest
 	err := c.ShouldBindJSON(&translateRequest)
 	if err != nil {
@@ -50,16 +57,22 @@ func Translate2Pdf(c *gin.Context) {
 	if err2 != nil {
 		log.Fatal(err2.Error())
 	}
-	err = pdf.Init()
-	if err != nil {
+	if flagForPdf == 0 {
+		err = pdf.Init()
+		flagForPdf = 1
+	}
+	//err = pdf.Init()
+	/*if err != nil {
 		return
 	}
-	defer pdf.Destroy()
+	defer pdf.Destroy()*/
 
 	object, err := pdf.NewObject("sample.html")
+	//object, err := pdf.NewObject("test.html")
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer object.Destroy()
 	object.Header.ContentCenter = "[title]"
 	object.Header.DisplaySeparator = true
 
@@ -70,12 +83,13 @@ func Translate2Pdf(c *gin.Context) {
 
 	// Create converter.
 	converter, err := pdf.NewConverter()
+
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer converter.Destroy()
-
 	// Add created objects to the converter.
+
 	converter.Add(object)
 	// Set converter options.
 	converter.Title = "Output Pdf"
@@ -85,18 +99,12 @@ func Translate2Pdf(c *gin.Context) {
 	converter.MarginBottom = "1cm"
 	converter.MarginLeft = "10mm"
 	converter.MarginRight = "10mm"
-
 	// Convert objects and save the output PDF document.
 	outFile, err := os.Create("out.pdf")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func(outFile *os.File) {
-		err := outFile.Close()
-		if err != nil {
-
-		}
-	}(outFile)
+	defer outFile.Close()
 	if err := converter.Run(outFile); err != nil {
 		log.Fatal(err)
 	}

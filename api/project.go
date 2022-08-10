@@ -420,7 +420,7 @@ func ProjectListTeam(ctx *gin.Context) {
 			}
 		} else if sortBy == "creator" && order == "2" {
 			if projects[i].CreatorId == projects[j].CreatorId {
-				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+				return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
 			} else {
 				return projects[i].CreatorId > projects[j].CreatorId
 			}
@@ -493,7 +493,7 @@ func ProjectListUser(ctx *gin.Context) {
 				}
 			} else if sortBy == "creator" && order == "2" {
 				if projects[i].CreatorId == projects[j].CreatorId {
-					return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+					return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
 				} else {
 					return projects[i].CreatorId > projects[j].CreatorId
 				}

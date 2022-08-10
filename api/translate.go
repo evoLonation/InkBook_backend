@@ -147,5 +147,11 @@ func DownloadPdf(c *gin.Context) {
 	c.File("out.pdf")
 }
 func DownloadMd(c *gin.Context) {
-	c.File("out.md")
+	content, err := os.ReadFile("out.md")
+	if err != nil {
+		panic(err)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"content": (string)(content),
+	})
 }

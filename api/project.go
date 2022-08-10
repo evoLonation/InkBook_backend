@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -20,6 +21,10 @@ type ProjectCreateRequest struct {
 }
 
 type ProjectDeleteRequest struct {
+	ProjectId int `json:"projectId"`
+}
+
+type ProjectCopyRequest struct {
 	ProjectId int `json:"projectId"`
 }
 
@@ -246,6 +251,151 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 	})
 }
 
+func ProjectCopy(ctx *gin.Context) {
+	var request ProjectCopyRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
+	if project == (entity.Project{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不存在",
+		})
+		return
+	}
+	if project.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目已删除",
+		})
+		return
+	}
+
+	var folder entity.Folder
+	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
+	if folder == (entity.Folder{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不存在",
+		})
+		return
+	}
+
+	var copiedProject []entity.Project
+	var newProjectName string
+	entity.Db.Where("name LIKE ? AND team_id = ?", project.Name+"的副本%", project.TeamId).Find(&copiedProject)
+	sort.SliceStable(copiedProject, func(i, j int) bool {
+		return copiedProject[i].Name > copiedProject[j].Name
+	})
+	if len(copiedProject) > 0 {
+		newProjectName = project.Name + "的副本(" + strconv.Itoa(len(copiedProject)+1) + ")"
+	} else {
+		newProjectName = project.Name + "的副本"
+	}
+
+	newProject := entity.Project{
+		Name:       newProjectName,
+		TeamId:     project.TeamId,
+		CreatorId:  project.CreatorId,
+		CreateTime: time.Now(),
+		IsDeleted:  false,
+		DeleteTime: time.Now(),
+		Intro:      project.Intro,
+		ImgURL:     "default.jpg",
+	}
+	result := entity.Db.Create(&newProject)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目副本创建失败",
+		})
+		return
+	}
+	entity.Db.Where("name = ? AND team_id = ?", newProject.Name, newProject.TeamId).First(&newProject)
+
+	newFolder := entity.Folder{
+		FolderId:   0,
+		Name:       newProject.Name + "的项目文档",
+		TeamId:     newProject.TeamId,
+		ParentId:   0,
+		CreatorId:  newProject.CreatorId,
+		CreateTime: time.Now(),
+		IsDeleted:  false,
+		DeleterId:  newProject.CreatorId,
+		DeleteTime: time.Now(),
+	}
+	result = entity.Db.Create(&newFolder)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目文件夹创建失败",
+		})
+		return
+	}
+	entity.Db.Where("name = ? AND team_id = ?", newFolder.Name, newFolder.TeamId).First(&newFolder)
+
+	var documents []entity.Document
+	entity.Db.Where("parent_id = ?", folder.FolderId).Find(&documents)
+	for _, document := range documents {
+		if document.IsDeleted {
+			continue
+		}
+		document.DocId = 0
+		document.ParentId = newFolder.FolderId
+		result = entity.Db.Create(&document)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目文件复制失败",
+			})
+			return
+		}
+	}
+
+	var prototypes []entity.Prototype
+	entity.Db.Where("project_id = ?", project.ProjectId).Find(&prototypes)
+	for _, prototype := range prototypes {
+		if prototype.IsDeleted {
+			continue
+		}
+		prototype.ProtoId = 0
+		prototype.ProjectId = newProject.ProjectId
+		result = entity.Db.Create(&prototype)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目原型复制失败",
+			})
+			return
+		}
+	}
+
+	var graphs []entity.Graph
+	entity.Db.Where("project_id = ?", project.ProjectId).Find(&graphs)
+	for _, graph := range graphs {
+		if graph.IsDeleted {
+			continue
+		}
+		graph.GraphId = 0
+		graph.ProjectId = newProject.ProjectId
+		result = entity.Db.Create(&graph)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目UML图复制失败",
+			})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":       "项目副本创建成功",
+		"projectId": newProject.ProjectId,
+		"folderId":  newFolder.FolderId,
+	})
+}
+
 func ProjectRename(ctx *gin.Context) {
 	var request ProjectRenameRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -397,12 +547,36 @@ func ProjectListTeam(ctx *gin.Context) {
 		})
 		return
 	}
+	sortBy := ctx.DefaultQuery("sortBy", "time")
+	order := ctx.DefaultQuery("order", "1")
 
 	var projects []entity.Project
 	var projectList []gin.H
 	entity.Db.Where("team_id = ?", teamId).Find(&projects)
 	sort.SliceStable(projects, func(i, j int) bool {
-		return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+		if sortBy == "time" && order == "1" {
+			return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+		} else if sortBy == "time" && order == "2" {
+			return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
+		} else if sortBy == "name" && order == "1" {
+			return projects[i].Name < projects[j].Name
+		} else if sortBy == "name" && order == "2" {
+			return projects[i].Name > projects[j].Name
+		} else if sortBy == "creator" && order == "1" {
+			if projects[i].CreatorId == projects[j].CreatorId {
+				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			} else {
+				return projects[i].CreatorId < projects[j].CreatorId
+			}
+		} else if sortBy == "creator" && order == "2" {
+			if projects[i].CreatorId == projects[j].CreatorId {
+				return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
+			} else {
+				return projects[i].CreatorId > projects[j].CreatorId
+			}
+		} else {
+			return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+		}
 	})
 	for _, project := range projects {
 		if project.IsDeleted {
@@ -440,6 +614,8 @@ func ProjectListUser(ctx *gin.Context) {
 		})
 		return
 	}
+	sortBy := ctx.DefaultQuery("sortBy", "time")
+	order := ctx.DefaultQuery("order", "1")
 
 	var teams []entity.TeamMember
 	var projectList []gin.H
@@ -451,7 +627,29 @@ func ProjectListUser(ctx *gin.Context) {
 		var projects []entity.Project
 		entity.Db.Where("team_id = ?", team.TeamId).Find(&projects)
 		sort.SliceStable(projects, func(i, j int) bool {
-			return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			if sortBy == "time" && order == "1" {
+				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			} else if sortBy == "time" && order == "2" {
+				return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
+			} else if sortBy == "name" && order == "1" {
+				return projects[i].Name < projects[j].Name
+			} else if sortBy == "name" && order == "2" {
+				return projects[i].Name > projects[j].Name
+			} else if sortBy == "creator" && order == "1" {
+				if projects[i].CreatorId == projects[j].CreatorId {
+					return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+				} else {
+					return projects[i].CreatorId < projects[j].CreatorId
+				}
+			} else if sortBy == "creator" && order == "2" {
+				if projects[i].CreatorId == projects[j].CreatorId {
+					return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
+				} else {
+					return projects[i].CreatorId > projects[j].CreatorId
+				}
+			} else {
+				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			}
 		})
 		for _, project := range projects {
 			if project.IsDeleted {
@@ -582,7 +780,7 @@ func ProjectSearch(ctx *gin.Context) {
 
 	var projects []entity.Project
 	var projectList []gin.H
-	entity.Db.Where("name LIKE ? AND team_id = ?", keyword, teamId).Find(&projects)
+	entity.Db.Where("name LIKE ? AND team_id = ?", "%"+keyword+"%", teamId).Find(&projects)
 	sort.SliceStable(projects, func(i, j int) bool {
 		return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
 	})

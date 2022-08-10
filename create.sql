@@ -48,7 +48,7 @@ create table projects
 create table folders
 (
     folder_id   int primary key auto_increment not null,
-    name        varchar(20) not null,
+    name        varchar(50) not null,
     team_id     int         not null,
     parent_id   int         not null default 0,
     creator_id  varchar(20) not null,
@@ -64,7 +64,7 @@ create table folders
 create table documents
 (
     doc_id      int primary key auto_increment not null,
-    name        varchar(20) not null,
+    name        varchar(50) not null,
     team_id     int         not null,
     parent_id   int         not null default 0,
     creator_id  varchar(20) not null,
@@ -86,7 +86,7 @@ create table documents
 create table prototypes
 (
     proto_id    int primary key auto_increment not null,
-    name        varchar(20) not null,
+    name        varchar(50) not null,
     project_id  int         not null,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
@@ -107,7 +107,7 @@ create table prototypes
 create table graphs
 (
     graph_id    int primary key auto_increment not null,
-    name        varchar(20) not null,
+    name        varchar(50) not null,
     project_id  int         not null,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),
@@ -128,7 +128,7 @@ create table graphs
 create table templates
 (
     template_id int primary key auto_increment not null,
-    name        varchar(20) not null,
+    name        varchar(50) not null,
     type        int         not null,
     creator_id  varchar(20) not null,
     create_time datetime    not null default now(),

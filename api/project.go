@@ -397,12 +397,36 @@ func ProjectListTeam(ctx *gin.Context) {
 		})
 		return
 	}
+	sortBy := ctx.DefaultQuery("sortBy", "time")
+	order := ctx.DefaultQuery("order", "1")
 
 	var projects []entity.Project
 	var projectList []gin.H
 	entity.Db.Where("team_id = ?", teamId).Find(&projects)
 	sort.SliceStable(projects, func(i, j int) bool {
-		return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+		if sortBy == "time" && order == "1" {
+			return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+		} else if sortBy == "time" && order == "2" {
+			return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
+		} else if sortBy == "name" && order == "1" {
+			return projects[i].Name < projects[j].Name
+		} else if sortBy == "name" && order == "2" {
+			return projects[i].Name > projects[j].Name
+		} else if sortBy == "creator" && order == "1" {
+			if projects[i].CreatorId == projects[j].CreatorId {
+				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			} else {
+				return projects[i].CreatorId < projects[j].CreatorId
+			}
+		} else if sortBy == "creator" && order == "2" {
+			if projects[i].CreatorId == projects[j].CreatorId {
+				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			} else {
+				return projects[i].CreatorId > projects[j].CreatorId
+			}
+		} else {
+			return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+		}
 	})
 	for _, project := range projects {
 		if project.IsDeleted {
@@ -440,6 +464,8 @@ func ProjectListUser(ctx *gin.Context) {
 		})
 		return
 	}
+	sortBy := ctx.DefaultQuery("sortBy", "time")
+	order := ctx.DefaultQuery("order", "1")
 
 	var teams []entity.TeamMember
 	var projectList []gin.H
@@ -451,7 +477,29 @@ func ProjectListUser(ctx *gin.Context) {
 		var projects []entity.Project
 		entity.Db.Where("team_id = ?", team.TeamId).Find(&projects)
 		sort.SliceStable(projects, func(i, j int) bool {
-			return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			if sortBy == "time" && order == "1" {
+				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			} else if sortBy == "time" && order == "2" {
+				return projects[i].CreateTime.Unix() < projects[j].CreateTime.Unix()
+			} else if sortBy == "name" && order == "1" {
+				return projects[i].Name < projects[j].Name
+			} else if sortBy == "name" && order == "2" {
+				return projects[i].Name > projects[j].Name
+			} else if sortBy == "creator" && order == "1" {
+				if projects[i].CreatorId == projects[j].CreatorId {
+					return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+				} else {
+					return projects[i].CreatorId < projects[j].CreatorId
+				}
+			} else if sortBy == "creator" && order == "2" {
+				if projects[i].CreatorId == projects[j].CreatorId {
+					return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+				} else {
+					return projects[i].CreatorId > projects[j].CreatorId
+				}
+			} else {
+				return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
+			}
 		})
 		for _, project := range projects {
 			if project.IsDeleted {

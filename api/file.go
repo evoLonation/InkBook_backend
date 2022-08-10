@@ -11,12 +11,14 @@ import (
 func FileList(ctx *gin.Context) {
 	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "teamId is required"})
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "teamId不能为空"})
 		return
 	}
 	parentId, ok := ctx.GetQuery("parentId")
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "parentId is required"})
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "parentId不能为空"})
 		return
 	}
 

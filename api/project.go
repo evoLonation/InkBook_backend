@@ -54,7 +54,7 @@ func ProjectCreate(ctx *gin.Context) {
 	entity.Db.Find(&project, "name = ?", request.Name)
 	if project != (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目已存在",
+			"msg": "项目已存在",
 		})
 		return
 	}
@@ -120,13 +120,13 @@ func ProjectDelete(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
 	if project.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目已删除",
+			"msg": "项目已删除",
 		})
 		return
 	}
@@ -146,13 +146,13 @@ func ProjectDelete(ctx *gin.Context) {
 	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
 	if folder == (entity.Folder{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目文件夹不存在",
+			"msg": "项目文件夹不存在",
 		})
 		return
 	}
 	if folder.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目文件夹已删除",
+			"msg": "项目文件夹已删除",
 		})
 		return
 	}
@@ -201,7 +201,7 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
@@ -262,13 +262,13 @@ func ProjectCopy(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
 	if project.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目已删除",
+			"msg": "项目已删除",
 		})
 		return
 	}
@@ -277,7 +277,7 @@ func ProjectCopy(ctx *gin.Context) {
 	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
 	if folder == (entity.Folder{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目文件夹不存在",
+			"msg": "项目文件夹不存在",
 		})
 		return
 	}
@@ -407,7 +407,7 @@ func ProjectRename(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
@@ -416,7 +416,7 @@ func ProjectRename(ctx *gin.Context) {
 	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
 	if folder == (entity.Folder{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目文件夹不存在",
+			"msg": "项目文件夹不存在",
 		})
 		return
 	}
@@ -425,7 +425,7 @@ func ProjectRename(ctx *gin.Context) {
 	entity.Db.Where("name = ? AND team_id = ?", request.NewName, project.TeamId).Find(&projects)
 	if len(projects) != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目名称重复",
+			"msg": "项目名称重复",
 		})
 		return
 	}
@@ -464,7 +464,7 @@ func ProjectModifyIntro(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
@@ -610,7 +610,7 @@ func ProjectListUser(ctx *gin.Context) {
 	userId, ok := ctx.GetQuery("userId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "userId不能为空",
+			"msg": "userId不能为空",
 		})
 		return
 	}
@@ -685,7 +685,7 @@ func ProjectRecycle(ctx *gin.Context) {
 	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "teamId不能为空",
+			"msg": "teamId不能为空",
 		})
 		return
 	}
@@ -735,13 +735,13 @@ func ProjectRecover(ctx *gin.Context) {
 	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
 	if project == (entity.Project{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
+			"msg": "项目不存在",
 		})
 		return
 	}
 	if !project.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不在回收站中",
+			"msg": "项目不在回收站中",
 		})
 		return
 	}
@@ -750,13 +750,13 @@ func ProjectRecover(ctx *gin.Context) {
 	entity.Db.Find(&folder, "name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId)
 	if folder == (entity.Folder{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目文件夹不存在",
+			"msg": "项目文件夹不存在",
 		})
 		return
 	}
 	if !folder.IsDeleted {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目文件夹不在回收站中",
+			"msg": "项目文件夹不在回收站中",
 		})
 		return
 	}
@@ -773,7 +773,7 @@ func ProjectSearch(ctx *gin.Context) {
 	teamId, ok := ctx.GetQuery("teamId")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "keyword不能为空",
+			"msg": "keyword不能为空",
 		})
 		return
 	}

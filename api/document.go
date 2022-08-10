@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/binary"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -618,21 +620,25 @@ func DocumentApplyEdit(ctx *gin.Context) {
 		"editorList":   nowEditors,
 	})
 }
-
-func DocumentImg(c *gin.Context) {
-	file, header, _ := c.Request.FormFile("file")
-	filename := header.Filename
+func getMd5(file []byte) string {
 	h := md5.New()
-	if _, err := io.Copy(h, file); err != nil {
-		log.Fatal(err)
-	}
+	h.Write(file)
 	bytesBuffer := bytes.NewBuffer(h.Sum(nil))
 	var x int64
 	binary.Read(bytesBuffer, binary.BigEndian, &x)
 	if x < 0 {
 		x *= -1
 	}
-	out, err := os.Create("./localFile/document/" + strconv.FormatInt(x, 16) + filename)
+	return strconv.FormatInt(x, 16)
+}
+func DocumentImg(c *gin.Context) {
+	file, header, _ := c.Request.FormFile("file")
+	filename := header.Filename
+	fileContent, _ := header.Open()
+	byteContainer, err := ioutil.ReadAll(fileContent)
+	p := getMd5(byteContainer)
+	fmt.Println(p)
+	out, err := os.Create("./localFile/document/" + p + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -646,7 +652,7 @@ func DocumentImg(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/api/localFile/document/" + strconv.FormatInt(x, 16) + filename})
+	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/localFile/document/" + p + filename})
 }
 
 func Url(c *gin.Context) {

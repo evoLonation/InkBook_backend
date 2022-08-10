@@ -246,7 +246,7 @@ func PrototypeModifyImg(ctx *gin.Context) {
 		return
 	}
 
-	output, err := os.Create("./localFile/prototype/" + strconv.Itoa(prototype.ProtoId) + filename)
+	output, err := os.Create("./localFile/prototype/" + strconv.Itoa(prototype.ProtoId) + filename + ".svg")
 	if err != nil {
 		log.Fatal(err)
 	}

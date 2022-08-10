@@ -17,7 +17,7 @@ func OopenFile(filename string) (*os.File, error) {
 	return os.OpenFile(filename, os.O_APPEND, 0666) //打开文件
 }
 
-func main() {
+func test() {
 	converter := md.NewConverter("", true, nil)
 
 	html := `<h1>建议收集</h1>`

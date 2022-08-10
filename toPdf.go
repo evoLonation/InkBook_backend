@@ -68,7 +68,6 @@ package main
 import (
 	"fmt"
 	pdf "github.com/adrg/go-wkhtmltopdf"
-	"io"
 	"log"
 	"os"
 )
@@ -83,14 +82,14 @@ func OpenFile(filename string) (*os.File, error) {
 	return os.OpenFile(filename, os.O_APPEND, 0666) //打开文件
 }
 
-func test() {
-	file, err := os.Create("sample3.html")
+func main() {
+	/*file, err := os.Create("test.html")
 	if err != nil { // 如果有错误，打印错误，同时返回
 		fmt.Println("err = ", err)
 		return
 	}
 	defer file.Close() // 在退出整个函数时，关闭文件
-	f1, err1 := OpenFile("sample3.html")
+	f1, err1 := OpenFile("test.html")
 	if err1 != nil {
 		log.Fatal(err1.Error())
 	}
@@ -98,44 +97,24 @@ func test() {
 	_, err2 := io.WriteString(f1, "测试文件1") //写入文件(字符串)
 	if err2 != nil {
 		log.Fatal(err2.Error())
-	}
-	err = pdf.Init()
+	}*/
+	err := pdf.Init()
 	if err != nil {
 		return
 	}
 	defer pdf.Destroy()
 
 	// Create object from file.
-	object, err := pdf.NewObject("sample.html")
+	object, err := pdf.NewObject("test.html")
 	if err != nil {
 		log.Fatal(err)
 	}
 	object.Header.ContentCenter = "[title]"
 	object.Header.DisplaySeparator = true
-
-	// Create object from URL.
-	/*object2, err := pdf.NewObject("https://google.com")
-	if err != nil {
-		log.Fatal(err)
-	}*/
 	object.Footer.ContentLeft = "[date]"
 	object.Footer.ContentCenter = "Sample footer information"
 	object.Footer.ContentRight = "[page]"
 	object.Footer.DisplaySeparator = true
-
-	/*// Create object from reader.
-	inFile, err := os.Open("sample2.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer inFile.Close()
-
-	object3, err := pdf.NewObjectFromReader(inFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	object3.Zoom = 1.5
-	object3.TOC.Title = "Table of Contents"*/
 
 	// Create converter.
 	converter, err := pdf.NewConverter()
@@ -146,8 +125,6 @@ func test() {
 
 	// Add created objects to the converter.
 	converter.Add(object)
-	//converter.Add(object2)
-	//converter.Add(object3)
 
 	// Set converter options.
 	converter.Title = "Sample document"

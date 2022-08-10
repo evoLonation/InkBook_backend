@@ -56,7 +56,6 @@ func Translate2Pdf(c *gin.Context) {
 	}
 	defer pdf.Destroy()
 
-	// Create object from file.
 	object, err := pdf.NewObject("sample.html")
 	if err != nil {
 		log.Fatal(err)
@@ -64,29 +63,10 @@ func Translate2Pdf(c *gin.Context) {
 	object.Header.ContentCenter = "[title]"
 	object.Header.DisplaySeparator = true
 
-	// Create object from URL.
-	/*object2, err := pdf.NewObject("https://google.com")
-	if err != nil {
-		log.Fatal(err)
-	}*/
 	object.Footer.ContentLeft = "[date]"
 	object.Footer.ContentCenter = "Sample footer information"
 	object.Footer.ContentRight = "[page]"
 	object.Footer.DisplaySeparator = true
-
-	/*// Create object from reader.
-	inFile, err := os.Open("sample2.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer inFile.Close()
-
-	object3, err := pdf.NewObjectFromReader(inFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	object3.Zoom = 1.5
-	object3.TOC.Title = "Table of Contents"*/
 
 	// Create converter.
 	converter, err := pdf.NewConverter()
@@ -97,9 +77,6 @@ func Translate2Pdf(c *gin.Context) {
 
 	// Add created objects to the converter.
 	converter.Add(object)
-	//converter.Add(object2)
-	//converter.Add(object3)
-
 	// Set converter options.
 	converter.Title = "Output Pdf"
 	converter.PaperSize = pdf.A4
@@ -123,7 +100,7 @@ func Translate2Pdf(c *gin.Context) {
 	if err := converter.Run(outFile); err != nil {
 		log.Fatal(err)
 	}
-	c.File("out.pdf")
+	//c.File("out.pdf")
 }
 func Translate2Md(c *gin.Context) {
 	var translateRequest TranslateRequest
@@ -156,7 +133,7 @@ func Translate2Md(c *gin.Context) {
 	if err2 != nil {
 		log.Fatal(err2.Error())
 	}
-	c.File("out.md")
+	//c.File("out.md")
 }
 func DownloadPdf(c *gin.Context) {
 	c.File("out.pdf")

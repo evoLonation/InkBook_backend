@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -281,8 +282,20 @@ func ProjectCopy(ctx *gin.Context) {
 		return
 	}
 
+	var copiedProject []entity.Project
+	var newProjectName string
+	entity.Db.Where("name LIKE ? AND team_id = ?", project.Name+"的副本%", project.TeamId).Find(&copiedProject)
+	sort.SliceStable(copiedProject, func(i, j int) bool {
+		return copiedProject[i].Name > copiedProject[j].Name
+	})
+	if len(copiedProject) > 0 {
+		newProjectName = project.Name + "的副本(" + strconv.Itoa(len(copiedProject)+1) + ")"
+	} else {
+		newProjectName = project.Name + "的副本"
+	}
+
 	newProject := entity.Project{
-		Name:       project.Name + "的副本",
+		Name:       newProjectName,
 		TeamId:     project.TeamId,
 		CreatorId:  project.CreatorId,
 		CreateTime: time.Now(),
@@ -767,7 +780,7 @@ func ProjectSearch(ctx *gin.Context) {
 
 	var projects []entity.Project
 	var projectList []gin.H
-	entity.Db.Where("name LIKE ? AND team_id = ?", keyword, teamId).Find(&projects)
+	entity.Db.Where("name LIKE ? AND team_id = ?", "%"+keyword+"%", teamId).Find(&projects)
 	sort.SliceStable(projects, func(i, j int) bool {
 		return projects[i].CreateTime.Unix() > projects[j].CreateTime.Unix()
 	})

@@ -98,6 +98,7 @@ create table prototypes
     delete_time datetime,
     content     LONGTEXT,
     editing_cnt int         not null default 0,
+    preview     varchar(20) default 'close',
     foreign key (project_id) references projects (project_id) on delete cascade,
     foreign key (creator_id) references users (user_id) on delete cascade,
     foreign key (deleter_id) references users (user_id) on delete set null,

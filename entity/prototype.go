@@ -16,4 +16,5 @@ type Prototype struct {
 	DeleteTime time.Time `gorm:"column:delete_time" json:"deleteTime"`
 	Content    string    `gorm:"column:content" json:"content"`
 	EditingCnt int       `gorm:"column:editing_cnt" json:"editingCnt"`
+	Preview    string    `gorm:"column:preview" json:"preview"`
 }

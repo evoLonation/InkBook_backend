@@ -136,6 +136,8 @@ func Start(address string) {
 		prototypeGroup.POST("/exit", PrototypeExit)
 		prototypeGroup.GET("/get", PrototypeGet)
 		prototypeGroup.POST("/apply-edit", PrototypeApplyEdit)
+		prototypeGroup.POST("/set-preview", PrototypeSetPreview)
+		prototypeGroup.GET("/get-preview", PrototypeGetPreview)
 	}
 
 	//template

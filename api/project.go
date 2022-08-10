@@ -189,108 +189,6 @@ func ProjectDelete(ctx *gin.Context) {
 	})
 }
 
-func ProjectCopy(ctx *gin.Context) {
-	var request ProjectCopyRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var project entity.Project
-	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
-	if project == (entity.Project{}) {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目不存在",
-		})
-		return
-	}
-	if project.IsDeleted {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目已删除",
-		})
-		return
-	}
-
-	var folder entity.Folder
-	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
-	if folder == (entity.Folder{}) {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "项目文件夹不存在",
-		})
-		return
-	}
-
-	var documents []entity.Document
-	var newDocuments []entity.Document
-	entity.Db.Where("parent_id = ?", folder.FolderId).Find(&documents)
-	for _, document := range documents {
-		if document.IsDeleted {
-			continue
-		}
-		newDocuments = append(newDocuments, document)
-	}
-
-	newProject := entity.Project{
-		Name:       project.Name + "的副本",
-		TeamId:     project.TeamId,
-		CreatorId:  project.CreatorId,
-		CreateTime: time.Now(),
-		IsDeleted:  false,
-		DeleteTime: time.Now(),
-		Intro:      project.Intro,
-		ImgURL:     "default.jpg",
-	}
-	result := entity.Db.Create(&newProject)
-	if result.Error != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
-			"msg":   "项目副本创建失败",
-		})
-		return
-	}
-
-	newFolder := entity.Folder{
-		FolderId:   0,
-		Name:       newProject.Name + "的项目文档",
-		TeamId:     newProject.TeamId,
-		ParentId:   0,
-		CreatorId:  newProject.CreatorId,
-		CreateTime: time.Now(),
-		IsDeleted:  false,
-		DeleterId:  newProject.CreatorId,
-		DeleteTime: time.Now(),
-	}
-	result = entity.Db.Create(&newFolder)
-	if result.Error != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
-			"msg":   "项目文件夹创建失败",
-		})
-		return
-	}
-
-	for _, document := range newDocuments {
-		document.DocId = 0
-		document.ParentId = newFolder.FolderId
-		result = entity.Db.Create(&document)
-		if result.Error != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": result.Error.Error(),
-				"msg":   "项目文件复制失败",
-			})
-			return
-		}
-	}
-
-	entity.Db.Where("name = ? AND team_id = ?", newProject.Name, newProject.TeamId).First(&newProject)
-	entity.Db.Where("name = ? AND team_id = ?", newFolder.Name, newFolder.TeamId).First(&newFolder)
-	ctx.JSON(http.StatusOK, gin.H{
-		"msg":       "项目副本创建成功",
-		"projectId": newProject.ProjectId,
-		"folderId":  newFolder.FolderId,
-	})
-}
-
 func ProjectCompleteDelete(ctx *gin.Context) {
 	var request ProjectDeleteRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -349,6 +247,103 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "项目删除成功",
+	})
+}
+
+func ProjectCopy(ctx *gin.Context) {
+	var request ProjectCopyRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var project entity.Project
+	entity.Db.Find(&project, "project_id = ?", request.ProjectId)
+	if project == (entity.Project{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目不存在",
+		})
+		return
+	}
+	if project.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目已删除",
+		})
+		return
+	}
+
+	var folder entity.Folder
+	entity.Db.Where("name = ? AND team_id = ?", project.Name+"的项目文档", project.TeamId).First(&folder)
+	if folder == (entity.Folder{}) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "项目文件夹不存在",
+		})
+		return
+	}
+
+	newProject := entity.Project{
+		Name:       project.Name + "的副本",
+		TeamId:     project.TeamId,
+		CreatorId:  project.CreatorId,
+		CreateTime: time.Now(),
+		IsDeleted:  false,
+		DeleteTime: time.Now(),
+		Intro:      project.Intro,
+		ImgURL:     "default.jpg",
+	}
+	result := entity.Db.Create(&newProject)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目副本创建失败",
+		})
+		return
+	}
+	entity.Db.Where("name = ? AND team_id = ?", newProject.Name, newProject.TeamId).First(&newProject)
+
+	newFolder := entity.Folder{
+		FolderId:   0,
+		Name:       newProject.Name + "的项目文档",
+		TeamId:     newProject.TeamId,
+		ParentId:   0,
+		CreatorId:  newProject.CreatorId,
+		CreateTime: time.Now(),
+		IsDeleted:  false,
+		DeleterId:  newProject.CreatorId,
+		DeleteTime: time.Now(),
+	}
+	result = entity.Db.Create(&newFolder)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+			"msg":   "项目文件夹创建失败",
+		})
+		return
+	}
+	entity.Db.Where("name = ? AND team_id = ?", newFolder.Name, newFolder.TeamId).First(&newFolder)
+
+	var documents []entity.Document
+	entity.Db.Where("parent_id = ?", folder.FolderId).Find(&documents)
+	for _, document := range documents {
+		if document.IsDeleted {
+			continue
+		}
+		document.DocId = 0
+		document.ParentId = newFolder.FolderId
+		result = entity.Db.Create(&document)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目文件复制失败",
+			})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":       "项目副本创建成功",
+		"projectId": newProject.ProjectId,
+		"folderId":  newFolder.FolderId,
 	})
 }
 

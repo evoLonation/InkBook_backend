@@ -142,6 +142,7 @@ func Start(address string) {
 		prototypeGroup.POST("/apply-edit", PrototypeApplyEdit)
 		prototypeGroup.POST("/set-preview", PrototypeSetPreview)
 		prototypeGroup.GET("/get-preview", PrototypeGetPreview)
+		prototypeGroup.GET("list-preview", PrototypeListPreview)
 	}
 
 	//template

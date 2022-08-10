@@ -2,9 +2,6 @@ package api
 
 import (
 	"backend/entity"
-	"bytes"
-	"crypto/md5"
-	"encoding/binary"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -640,14 +637,27 @@ func PrototypeGetPreview(ctx *gin.Context) {
 	})
 }
 
-func getMd5InProto(file []byte) string {
-	h := md5.New()
-	h.Write(file)
-	bytesBuffer := bytes.NewBuffer(h.Sum(nil))
-	var x int64
-	binary.Read(bytesBuffer, binary.BigEndian, &x)
-	if x < 0 {
-		x *= -1
+func PrototypeListPreview(ctx *gin.Context) {
+	projectId, ok := ctx.GetQuery("projectId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "projectId不能为空",
+		})
+		return
 	}
-	return strconv.FormatInt(x, 16)
+
+	var prototypes []entity.Prototype
+	var previewList []gin.H
+	entity.Db.Find(&prototypes, "project_id = ? and preview = ?", projectId, "open")
+	for _, prototype := range prototypes {
+		previewList = append(previewList, gin.H{
+			"protoId":   prototype.ProtoId,
+			"protoName": prototype.Name,
+			"content":   prototype.Content,
+		})
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":         "获取可预览页面列表成功",
+		"previewList": previewList,
+	})
 }

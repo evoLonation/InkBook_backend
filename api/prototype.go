@@ -246,7 +246,7 @@ func PrototypeModifyImg(ctx *gin.Context) {
 		return
 	}
 
-	output, err := os.Create("./localFile/prototype/" + strconv.Itoa(prototype.ProtoId) + filename + ".svg")
+	output, err := os.Create("./localFile/prototype/" + strconv.Itoa(prototype.ProtoId) + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -261,7 +261,7 @@ func PrototypeModifyImg(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	entity.Db.Model(&prototype).Where("proto_id = ?", ProtoId).Update("img", strconv.Itoa(prototype.ProtoId)+filename+".svg")
+	entity.Db.Model(&prototype).Where("proto_id = ?", ProtoId).Update("img", strconv.Itoa(prototype.ProtoId)+filename)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "原型封面修改成功",
 	})

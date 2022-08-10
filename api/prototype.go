@@ -645,16 +645,34 @@ func PrototypeListPreview(ctx *gin.Context) {
 		})
 		return
 	}
+	protoId, ok := ctx.GetQuery("protoId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "protoId不能为空",
+		})
+		return
+	}
 
 	var prototypes []entity.Prototype
 	var previewList []gin.H
 	entity.Db.Find(&prototypes, "project_id = ? and preview = ?", projectId, "open")
 	for _, prototype := range prototypes {
-		previewList = append(previewList, gin.H{
-			"protoId":   prototype.ProtoId,
-			"protoName": prototype.Name,
-			"content":   prototype.Content,
-		})
+		if strconv.Itoa(prototype.ProtoId) == protoId {
+			temp := []gin.H{
+				{
+					"protoId":   prototype.ProtoId,
+					"protoName": prototype.Name,
+					"content":   prototype.Content,
+				},
+			}
+			previewList = append(temp, previewList...)
+		} else {
+			previewList = append(previewList, gin.H{
+				"protoId":   prototype.ProtoId,
+				"protoName": prototype.Name,
+				"content":   prototype.Content,
+			})
+		}
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":         "获取可预览页面列表成功",

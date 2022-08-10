@@ -57,7 +57,7 @@ func GraphCreate(ctx *gin.Context) {
 	}
 
 	var graph entity.Graph
-	entity.Db.Find(&graph, "name = ?", request.Name)
+	entity.Db.Find(&graph, "name = ? and project_id = ?", request.Name, request.ProjectId)
 	if graph != (entity.Graph{}) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "UML图已存在",

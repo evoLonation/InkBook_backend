@@ -57,7 +57,7 @@ func PrototypeCreate(ctx *gin.Context) {
 	}
 
 	var prototype entity.Prototype
-	entity.Db.Find(&prototype, "name = ?", request.Name)
+	entity.Db.Find(&prototype, "name = ? and project_id = ?", request.Name, request.ProjectId)
 	if prototype.ProtoId != 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"msg": "原型已存在",

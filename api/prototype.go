@@ -45,6 +45,11 @@ type ProtoApplyEditRequest struct {
 	UserId  string `json:"userId"`
 }
 
+type ProtoSetPreviewRequest struct {
+	ProtoId int    `json:"protoId"`
+	Type    string `json:"type"`
+}
+
 var protoEditorMap = make(map[int][]string)
 var protoEditTimeMap = make(map[int]time.Time)
 var protoUserTimeMap = make(map[string]time.Time)
@@ -93,6 +98,7 @@ func PrototypeCreate(ctx *gin.Context) {
 		DeleteTime: time.Now(),
 		Content:    content,
 		EditingCnt: 0,
+		Preview:    "close",
 	}
 	result := entity.Db.Create(&prototype)
 	if result.Error != nil {
@@ -495,5 +501,71 @@ func PrototypeApplyEdit(ctx *gin.Context) {
 		"msg":          "原型申请编辑成功",
 		"nowEditorNum": len(nowEditors),
 		"editorList":   nowEditors,
+	})
+}
+
+func PrototypeSetPreview(ctx *gin.Context) {
+	var request ProtoSetPreviewRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", request.ProtoId)
+	if prototype.ProtoId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+	if prototype.IsDeleted {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型在回收站中, 无法设置",
+		})
+		return
+	}
+
+	if request.Type != "open" && request.Type != "close" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "type参数错误",
+		})
+		return
+	}
+
+	result := entity.Db.Model(&prototype).Where("proto_id = ?", request.ProtoId).Update("preview", request.Type)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg":   "设置预览状态失败",
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "设置预览状态成功",
+	})
+}
+
+func PrototypeGetPreview(ctx *gin.Context) {
+	protoId, ok := ctx.GetQuery("protoId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "protoId不能为空",
+		})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", protoId)
+	if prototype.ProtoId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg":  "获取预览状态成功",
+		"type": prototype.Preview,
 	})
 }

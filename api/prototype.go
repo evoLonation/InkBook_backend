@@ -261,7 +261,7 @@ func PrototypeModifyImg(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	entity.Db.Model(&prototype).Where("proto_id = ?", ProtoId).Update("img", strconv.Itoa(prototype.ProtoId)+filename)
+	entity.Db.Model(&prototype).Where("proto_id = ?", ProtoId).Update("img", strconv.Itoa(prototype.ProtoId)+filename+".svg")
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "原型封面修改成功",
 	})

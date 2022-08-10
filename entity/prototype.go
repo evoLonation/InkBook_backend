@@ -17,4 +17,5 @@ type Prototype struct {
 	Content    string    `gorm:"column:content" json:"content"`
 	EditingCnt int       `gorm:"column:editing_cnt" json:"editingCnt"`
 	Preview    string    `gorm:"column:preview" json:"preview"`
+	Img        string    `gorm:"column:img" json:"img"`
 }

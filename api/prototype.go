@@ -3,7 +3,10 @@ package api
 import (
 	"backend/entity"
 	"github.com/gin-gonic/gin"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"sort"
 	"time"
 )
@@ -99,6 +102,7 @@ func PrototypeCreate(ctx *gin.Context) {
 		Content:    content,
 		EditingCnt: 0,
 		Preview:    "close",
+		Img:        "default.jpg",
 	}
 	result := entity.Db.Create(&prototype)
 	if result.Error != nil {
@@ -218,6 +222,67 @@ func PrototypeRename(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "原型重命名成功",
 	})
+}
+
+func PrototypeModifyImg(ctx *gin.Context) {
+	file, header, err := ctx.Request.FormFile("newImg")
+	filename := header.Filename
+	output, err := os.Create("./localFile/prototype/" + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(output *os.File) {
+		err := output.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(output)
+	_, err = io.Copy(output, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ProtoId, ok := ctx.GetPostForm("protoId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "protoId不能为空",
+		})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", ProtoId)
+	if prototype.ProtoId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+
+	entity.Db.Model(&prototype).Where("proto_id = ?", ProtoId).Update("img", filename)
+	ctx.JSON(http.StatusOK, gin.H{
+		"msg": "原型封面修改成功",
+	})
+}
+
+func PrototypeGetImg(ctx *gin.Context) {
+	ProtoId, ok := ctx.GetQuery("protoId")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "protoId不能为空",
+		})
+		return
+	}
+
+	var prototype entity.Prototype
+	entity.Db.Find(&prototype, "proto_id = ?", ProtoId)
+	if prototype.ProtoId == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"msg": "原型不存在",
+		})
+		return
+	}
+	ctx.File("localFile/prototype/" + prototype.Img)
 }
 
 func PrototypeList(ctx *gin.Context) {

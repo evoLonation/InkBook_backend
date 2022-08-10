@@ -575,6 +575,7 @@ func DocumentGet(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":     "文档获取成功",
+		"docName": document.Name,
 		"content": document.Content,
 	})
 }

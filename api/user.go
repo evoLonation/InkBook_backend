@@ -139,10 +139,33 @@ func UserLogin(c *gin.Context) {
 		})
 		return
 	}
+	userId := loginUser.UserId
+	var teams []entity.Team
+	var maxTeamId = -1
+	entity.Db.Table("teams").Select("teams.team_id as team_id,teams.name as name,teams.intro as intro").Joins("join team_members on team_members.team_id = teams.team_id", userId).Where("member_id=?", userId).Scan(&teams)
+	for _, team := range teams {
+		if team.TeamId > maxTeamId {
+			maxTeamId = team.TeamId
+		}
+	}
+	if maxTeamId == -1 {
+		c.JSON(http.StatusOK, gin.H{
+			"msg":      "登陆成功",
+			"userId":   loginUser.UserId,
+			"nickName": loginUser.Nickname,
+			"teamId":   maxTeamId,
+			"teamName": "",
+		})
+		return
+	}
+	var team entity.Team
+	entity.Db.Find(&team, "team_id=?", maxTeamId)
 	c.JSON(http.StatusOK, gin.H{
 		"msg":      "登陆成功",
 		"userId":   loginUser.UserId,
 		"nickName": loginUser.Nickname,
+		"teamId":   team.TeamId,
+		"teamName": team.Name,
 	})
 }
 func UserInformation(c *gin.Context) {

@@ -59,6 +59,7 @@ func Start(address string) {
 		projectGroup.POST("/create", ProjectCreate)
 		projectGroup.POST("/delete", ProjectDelete)
 		projectGroup.POST("/complete-delete", ProjectCompleteDelete)
+		projectGroup.POST("/copy", ProjectCopy)
 		projectGroup.POST("/rename", ProjectRename)
 		projectGroup.POST("/modify/intro", ProjectModifyIntro)
 		projectGroup.POST("/modify/img", ProjectModifyImg)

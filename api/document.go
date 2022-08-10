@@ -646,7 +646,7 @@ func DocumentImg(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/api/url/" + "./localFile/document/" + strconv.FormatInt(x, 16) + filename})
+	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/api/localFile/document/" + strconv.FormatInt(x, 16) + filename})
 }
 
 func Url(c *gin.Context) {

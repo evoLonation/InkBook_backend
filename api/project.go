@@ -340,6 +340,42 @@ func ProjectCopy(ctx *gin.Context) {
 		}
 	}
 
+	var prototypes []entity.Prototype
+	entity.Db.Where("project_id = ?", project.ProjectId).Find(&prototypes)
+	for _, prototype := range prototypes {
+		if prototype.IsDeleted {
+			continue
+		}
+		prototype.ProtoId = 0
+		prototype.ProjectId = newProject.ProjectId
+		result = entity.Db.Create(&prototype)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目原型复制失败",
+			})
+			return
+		}
+	}
+
+	var graphs []entity.Graph
+	entity.Db.Where("project_id = ?", project.ProjectId).Find(&graphs)
+	for _, graph := range graphs {
+		if graph.IsDeleted {
+			continue
+		}
+		graph.GraphId = 0
+		graph.ProjectId = newProject.ProjectId
+		result = entity.Db.Create(&graph)
+		if result.Error != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": result.Error.Error(),
+				"msg":   "项目UML图复制失败",
+			})
+			return
+		}
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg":       "项目副本创建成功",
 		"projectId": newProject.ProjectId,

@@ -175,7 +175,7 @@ func ProjectDelete(ctx *gin.Context) {
 		document.IsDeleted = true
 		document.DeleterId = project.CreatorId
 		document.DeleteTime = time.Now()
-		result = entity.Db.Model(&document).Where("document_id = ?", document.DocId).Updates(&document)
+		result = entity.Db.Model(&document).Where("doc_id = ?", document.DocId).Updates(&document)
 		if result.Error != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"error": result.Error.Error(),
@@ -227,7 +227,7 @@ func ProjectCompleteDelete(ctx *gin.Context) {
 	var documents []entity.Document
 	entity.Db.Where("parent_id = ?", folder.FolderId).Find(&documents)
 	for _, document := range documents {
-		result = entity.Db.Where("document_id = ?", document.DocId).Delete(&document)
+		result = entity.Db.Where("doc_id = ?", document.DocId).Delete(&document)
 		if result.Error != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"error": result.Error.Error(),

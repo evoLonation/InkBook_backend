@@ -2,12 +2,16 @@ package api
 
 import (
 	"backend/entity"
+	"bytes"
+	"crypto/md5"
+	"encoding/binary"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -227,20 +231,6 @@ func PrototypeRename(ctx *gin.Context) {
 func PrototypeModifyImg(ctx *gin.Context) {
 	file, header, err := ctx.Request.FormFile("newImg")
 	filename := header.Filename
-	output, err := os.Create("./localFile/prototype/" + filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func(output *os.File) {
-		err := output.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(output)
-	_, err = io.Copy(output, file)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	ProtoId, ok := ctx.GetPostForm("protoId")
 	if !ok {
@@ -259,7 +249,22 @@ func PrototypeModifyImg(ctx *gin.Context) {
 		return
 	}
 
-	entity.Db.Model(&prototype).Where("proto_id = ?", ProtoId).Update("img", filename)
+	output, err := os.Create("./localFile/prototype/" + strconv.Itoa(prototype.ProtoId) + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(output *os.File) {
+		err := output.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(output)
+	_, err = io.Copy(output, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	entity.Db.Model(&prototype).Where("proto_id = ?", ProtoId).Update("img", strconv.Itoa(prototype.ProtoId)+filename)
 	ctx.JSON(http.StatusOK, gin.H{
 		"msg": "原型封面修改成功",
 	})
@@ -633,4 +638,16 @@ func PrototypeGetPreview(ctx *gin.Context) {
 		"msg":  "获取预览状态成功",
 		"type": prototype.Preview,
 	})
+}
+
+func getMd5InProto(file []byte) string {
+	h := md5.New()
+	h.Write(file)
+	bytesBuffer := bytes.NewBuffer(h.Sum(nil))
+	var x int64
+	binary.Read(bytesBuffer, binary.BigEndian, &x)
+	if x < 0 {
+		x *= -1
+	}
+	return strconv.FormatInt(x, 16)
 }

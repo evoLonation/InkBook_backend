@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -221,20 +222,6 @@ func GraphRename(ctx *gin.Context) {
 func GraphModifyImg(ctx *gin.Context) {
 	file, header, err := ctx.Request.FormFile("newImg")
 	filename := header.Filename
-	output, err := os.Create("./localFile/graph/" + filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func(output *os.File) {
-		err := output.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(output)
-	_, err = io.Copy(output, file)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	graphId, ok := ctx.GetPostForm("graphId")
 	if !ok {
@@ -251,6 +238,21 @@ func GraphModifyImg(ctx *gin.Context) {
 			"msg": "UML图不存在",
 		})
 		return
+	}
+
+	output, err := os.Create("./localFile/graph/" + strconv.Itoa(graph.GraphId) + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(output *os.File) {
+		err := output.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(output)
+	_, err = io.Copy(output, file)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	entity.Db.Model(&graph).Where("graph_id = ?", graphId).Update("img", filename)

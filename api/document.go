@@ -2,12 +2,16 @@ package api
 
 import (
 	"backend/entity"
+	"bytes"
+	"crypto/md5"
+	"encoding/binary"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -616,9 +620,19 @@ func DocumentApplyEdit(ctx *gin.Context) {
 }
 
 func DocumentImg(c *gin.Context) {
-	file, header, err := c.Request.FormFile("file")
+	file, header, _ := c.Request.FormFile("file")
 	filename := header.Filename
-	out, err := os.Create("./localFile/document/" + filename)
+	h := md5.New()
+	if _, err := io.Copy(h, file); err != nil {
+		log.Fatal(err)
+	}
+	bytesBuffer := bytes.NewBuffer(h.Sum(nil))
+	var x int64
+	binary.Read(bytesBuffer, binary.BigEndian, &x)
+	if x < 0 {
+		x *= -1
+	}
+	out, err := os.Create("./localFile/document/" + strconv.FormatInt(x, 16) + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -632,7 +646,7 @@ func DocumentImg(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/api/url/" + "./localFile/document/" + filename})
+	c.JSON(http.StatusOK, gin.H{"url": "http://43.138.71.108/api/url/" + "./localFile/document/" + strconv.FormatInt(x, 16) + filename})
 }
 
 func Url(c *gin.Context) {

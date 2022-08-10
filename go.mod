@@ -27,6 +27,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/naxels/go_md5_for_file v0.0.0-20151116130619-578a573c3231 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/tcort/wkhtmltox v1.1.5 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
